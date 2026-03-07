@@ -85,7 +85,7 @@
   </header>
 
   <div style="display:flex; justify-content:space-between; align-items:center;">
-    <div class="section-label">Routines</div>
+    <div class="section-label">Routine</div>
     <div style="font-size:12px; color:#0277bd; cursor:pointer; margin-right:10px;" onclick="openManageRoutineModal()">⚙️ Edit</div>
   </div>
   <div id="routineButtons" class="list-container"></div>
@@ -99,7 +99,7 @@
     <button class="action-btn secondary" style="background:#455a64; margin-top:10px;" onclick="openHistoryModal()">📅 View History</button>
   </div>
 
-  <div class="version-label" onclick="window.location.reload(true)">Version 1.2.0</div>
+  <div class="version-label" onclick="window.location.reload(true)">Version 1.2.1</div>
 </main>
 
 <div id="loginModal" class="modal" style="display:flex;">
@@ -114,13 +114,11 @@
   <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
     <h2>Manage Routines</h2>
     <div id="routineSettingsList" style="text-align:left; margin-bottom:0;"></div>
-    
     <div style="padding: 0;">
       <div class="helper-text">
         Add a task below. Tap the square to use your phone's <b>Emoji Keyboard</b> for an icon! <br>
         <i>Example: 🪥 Brush Teeth</i>
       </div>
-      
       <div class="routine-input-group">
         <input type="text" id="newRoutineEmoji" placeholder="🐾" maxlength="2" style="padding:15px; border-radius:10px; border:none; background:#333; color:white;">
         <input type="text" id="newRoutineName" placeholder="Task Name" style="flex-grow:1; padding:15px; border-radius:10px; border:none; background:#333; color:white;">
@@ -233,6 +231,9 @@
       btn.className = `task-btn ${val ? 'done' : ''}`;
       btn.innerHTML = `<span>${r.emoji} ${r.name}</span><small style="opacity:0.7">${val || ''}</small>`;
       btn.onclick = () => {
+        if (val) {
+          if (!confirm(`Are you sure you want to uncheck "${r.name}"?`)) return;
+        }
         setSyncUI(true);
         const timeStr = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         const newVal = val ? null : `✔ ${timeStr} (${userFirstName})`;
@@ -259,8 +260,6 @@
     const wContainer = document.getElementById('walkList');
     wContainer.innerHTML = '';
     try { activeWalks = walksJson ? JSON.parse(walksJson) : []; } catch(e) { activeWalks = []; }
-    
-    // Sort walks chronologically
     activeWalks.sort((a, b) => {
       const toMinutes = (timeStr) => {
         const [time, period] = timeStr.split(' ');
@@ -271,7 +270,6 @@
       };
       return toMinutes(a.time) - toMinutes(b.time);
     });
-
     if(activeWalks.length === 0) {
       wContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#555;">No walks today</div>';
       return;
@@ -299,24 +297,8 @@
   }
 
   function confirmDeleteWalk() { if (confirm("Delete walk?")) { const filtered = activeWalks.filter(w => w.id != editingWalkId); db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(filtered)).then(() => closeWalkModal()); } }
-  
-  function openWalkModal(w = null) { 
-    editingWalkId = w ? w.id : null; 
-    if (w) { 
-      const [t, m] = w.time.split(' '); let [h, min] = t.split(':'); 
-      if (m === 'PM' && h !== '12') h = parseInt(h) + 12; if (m === 'AM' && h === '12') h = '00'; 
-      document.getElementById('walkTimeInput').value = `${h.toString().padStart(2,'0')}:${min}`; 
-    } else { 
-      const now = new Date(); document.getElementById('walkTimeInput').value = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0'); 
-    } 
-    document.getElementById('walkModal').style.display = 'flex'; 
-    document.getElementById('editSaveArea').style.display = w ? 'block' : 'none'; 
-    document.getElementById('editWalkControls').style.display = w ? 'block' : 'none'; 
-    document.getElementById('walkModalTitle').textContent = w ? "Edit Walk" : "Log Walk"; 
-  }
-  
+  function openWalkModal(w = null) { editingWalkId = w ? w.id : null; if (w) { const [t, m] = w.time.split(' '); let [h, min] = t.split(':'); if (m === 'PM' && h !== '12') h = parseInt(h) + 12; if (m === 'AM' && h === '12') h = '00'; document.getElementById('walkTimeInput').value = `${h.toString().padStart(2,'0')}:${min}`; } else { const now = new Date(); document.getElementById('walkTimeInput').value = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0'); } document.getElementById('walkModal').style.display = 'flex'; document.getElementById('editSaveArea').style.display = w ? 'block' : 'none'; document.getElementById('editWalkControls').style.display = w ? 'block' : 'none'; document.getElementById('walkModalTitle').textContent = w ? "Edit Walk" : "Log Walk"; }
   function closeWalkModal() { document.getElementById('walkModal').style.display = 'none'; }
-
   function openManageRoutineModal() {
     const list = document.getElementById('routineSettingsList');
     list.innerHTML = '';
@@ -328,7 +310,6 @@
     });
     document.getElementById('manageRoutineModal').style.display = 'flex';
   }
-  
   function addRoutine() {
     const name = document.getElementById('newRoutineName').value.trim();
     const emoji = document.getElementById('newRoutineEmoji').value.trim() || '✅';
@@ -341,10 +322,8 @@
       });
     }
   }
-  
   function removeRoutine(name) { if(confirm(`Remove "${name}" permanently?`)) { const newList = currentRoutines.filter(r => r.name !== name); db.ref('settings/routines').set(newList).then(() => openManageRoutineModal()); } }
   function closeManageRoutineModal() { document.getElementById('manageRoutineModal').style.display = 'none'; }
-  
   function loadHistory(daysCount) {
     const historyList = document.getElementById('historyList');
     const btnWeek = document.getElementById('btnWeek');
@@ -371,16 +350,14 @@
       });
     });
   }
-  
   function handleSupplyBanner(items) {
     const low = []; if(items.Food) low.push('FOOD'); if(items.Meds) low.push('MEDS'); if(items.Treats) low.push('TREATS');
     const b = document.getElementById('supplyBanner'); if(b) { b.style.display = low.length > 0 ? 'block' : 'none'; b.innerHTML = low.length > 0 ? `⚠️ LOW ${low.join(' & ')} ⚠️` : ''; }
     ['Food','Meds','Treats'].forEach(s => { const el = document.getElementById('check'+s); if(el) el.checked = !!items[s]; });
   }
-  
   function setSyncUI(isSyncing) { const bar = document.getElementById('syncStatus'); if(isSyncing) bar.classList.add('visible'); else bar.classList.remove('visible'); }
   function openSupplyModal() { document.getElementById('supplyModal').style.display = 'flex'; }
-  function closeSupplyModal() { document.getElementById('supplyModal').style.display = 'none'; }
+  function closeSupplyModal() { document.getElementById('supplyModal').style.none; }
   function openHistoryModal() { document.getElementById('historyModal').style.display = 'flex'; loadHistory(7); }
   function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
   function handleGoogleLogin() { auth.signInWithPopup(provider); }
@@ -389,4 +366,3 @@
 </script>
 </body>
 </html>
-
