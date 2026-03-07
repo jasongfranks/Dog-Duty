@@ -62,7 +62,9 @@
 
     .routine-input-group { display: flex; gap: 10px; margin-bottom: 15px; }
     #newRoutineEmoji { width: 60px; text-align: center; font-size: 24px; }
-    .helper-text { font-size: 13px; color: #aaa; margin: 10px 0 15px 0; line-height: 1.4; }
+    
+    /* Spacing fix for helper text */
+    .helper-text { font-size: 13px; color: #aaa; margin: 5px 0 15px 0; line-height: 1.4; }
 
     .version-label { text-align: center; margin-top: 40px; opacity: 0.5; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; padding: 10px; }
   </style>
@@ -98,7 +100,7 @@
     <button class="action-btn secondary" style="background:#455a64; margin-top:10px;" onclick="openHistoryModal()">📅 View History</button>
   </div>
 
-  <div class="version-label" onclick="window.location.reload(true)">Version 1.1.6</div>
+  <div class="version-label" onclick="window.location.reload(true)">Version 1.1.7</div>
 </main>
 
 <div id="loginModal" class="modal" style="display:flex;">
@@ -116,7 +118,7 @@
     
     <div style="border-top: 1px solid #333; padding-top: 15px;">
       <p class="helper-text">
-        Add a new task below. Tap the square to use your phone's <b>Emoji Keyboard</b> to pick an icon! <br>
+        Add a task below. Tap the square to use your phone's <b>Emoji Keyboard</b> for an icon! <br>
         <i>Example: 🪥 Brush Teeth</i>
       </p>
       
@@ -203,7 +205,7 @@
         document.getElementById('userNameDisplay').textContent = userFirstName;
         init();
       } else { auth.signOut(); }
-    } else { document.getElementById('loginModal').style.display = 'flex'; document.getElementById('appContent').style.display = 'none'; }
+    } else { document.getElementById('loginModal').style.display = 'flex'; document.getElementById('appContent').style.none; }
   });
 
   function init() {
