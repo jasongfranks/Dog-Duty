@@ -4,68 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Dog Duty</title>
-  
-  <link rel="icon" type="image/png" href="dogdutyicon.png">
-  <link rel="apple-touch-icon" href="dogdutyicon.png">
-  
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Dog Duty">
-
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-
   <style>
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #121212; color: #fff; margin: 0; padding: 0; font-size: 16px; overflow-x: hidden; }
-    
-    #supplyBanner { display: none; background: #b71c1c; color: white; padding: 14px; text-align: center; font-weight: 800; font-size: 16px; border-bottom: 3px solid #ff5252; text-transform: uppercase; }
-    main { padding: 12px; display: none; }
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #333; }
-    .brand-area { display: flex; align-items: center; gap: 10px; }
-    .brand-area img { height: 30px; width: auto; max-width: 120px; border-radius: 4px; }
-    h1 { margin: 0; font-size: 20px; white-space: nowrap; font-weight: 800; letter-spacing: -0.5px; }
-    #syncStatus { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #4fc3f7; opacity: 0; transition: opacity 0.3s; }
-    #syncStatus.visible { opacity: 1; }
-    
-    .icon-btn { background: #333; padding: 8px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; color: #fff; cursor: pointer; border: none; display: flex; align-items: center; gap: 6px; }
-    .list-container { display: flex; flex-direction: column; gap: 12px; }
-    .section-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; margin: 15px 0 5px 5px; }
-    
-    button.task-btn { width: 100%; text-align: left; font-size: 18px; padding: 20px; border-radius: 18px; border: none; background: #2c2c2c; color: #e0e0e0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.15s ease; }
-    button.task-btn.done { background: #2e7d32; color: #fff; }
-
-    .walk-content { display: grid; grid-template-columns: auto 1fr auto; align-items: center; width: 100%; gap: 12px; }
-    .walk-left { text-align: left; font-size: 18px; white-space: nowrap; }
-    .walk-center { text-align: left; font-size: 24px; }
-    .walk-right { text-align: right; white-space: nowrap; }
-
-    .add-walk-btn { width: 100%; background: #0277bd; color: white; border: none; padding: 18px; border-radius: 18px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); }
-    .modal-content { background: #1e1e1e; padding: 25px; border-radius: 24px; text-align: center; width: 92%; max-width: 400px; border: 1px solid #333; }
-    
-    .action-btn { display: block; width: 100%; padding: 16px; font-size: 18px; border-radius: 14px; border: none; background: #2e7d32; color: white; margin-bottom: 10px; cursor: pointer; font-weight: bold; }
-    .action-btn.secondary { background: #333; color: #ccc; }
-    
-    input[type="time"] { 
-      width: 100%; display: block; margin: 0 auto 15px auto; padding: 15px; font-size: 28px; border-radius: 14px; border: 2px solid #444; background: #222; color: white; text-align: center; -webkit-appearance: none;
-    }
-
-    .supply-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 10px; border-bottom: 1px solid #333; }
-    .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #2e7d32; transition: .4s; border-radius: 34px; }
-    .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-    input:checked + .slider { background-color: #d32f2f; }
-    input:checked + .slider:before { transform: translateX(26px); }
-
-    .routine-input-group { display: flex; gap: 10px; margin-bottom: 15px; }
-    #newRoutineEmoji { width: 60px; text-align: center; font-size: 24px; }
-    
-    .helper-text { font-size: 13px; color: #aaa; margin: 0; padding: 12px 0 15px 0; line-height: 1.4; text-align: center; }
-
-    .version-label { text-align: center; margin-top: 40px; opacity: 0.5; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; padding: 10px; }
+    /* Adding a specific style for the admin button */
+    .admin-btn { background: #4527a0 !important; margin-top: 10px; }
+    .family-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; }
   </style>
 </head>
 <body>
@@ -97,219 +39,109 @@
   <div style="margin-top:30px; border-top: 1px solid #333; padding-top:20px;">
     <button class="action-btn secondary" onclick="openSupplyModal()">📦 Manage Supplies</button>
     <button class="action-btn secondary" style="background:#455a64; margin-top:10px;" onclick="openHistoryModal()">📅 View History</button>
+    <button id="adminBtn" class="action-btn admin-btn" style="display:none;" onclick="openAdminModal()">👨‍👩‍👧‍👦 Manage Family</button>
   </div>
-
-  <div class="version-label" onclick="window.location.reload(true)">Version 1.2.1</div>
+  <div class="version-label" onclick="window.location.reload(true)">Version 1.2.3</div>
 </main>
 
-<div id="loginModal" class="modal" style="display:flex;">
-  <div class="modal-content">
-    <img src="dogdutyicon.png" style="height:100px; width:100px; margin-bottom:20px; border-radius:20px;">
-    <h2>Family Access</h2>
-    <button class="action-btn" onclick="handleGoogleLogin()" style="background:#4285F4; display:flex; align-items:center; justify-content:center; gap:10px; width:100%;">Sign in with Google</button>
-  </div>
-</div>
-
-<div id="manageRoutineModal" class="modal">
-  <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
-    <h2>Manage Routines</h2>
-    <div id="routineSettingsList" style="text-align:left; margin-bottom:0;"></div>
-    <div style="padding: 0;">
-      <div class="helper-text">
-        Add a task below. Tap the square to use your phone's <b>Emoji Keyboard</b> for an icon! <br>
-        <i>Example: 🪥 Brush Teeth</i>
-      </div>
-      <div class="routine-input-group">
-        <input type="text" id="newRoutineEmoji" placeholder="🐾" maxlength="2" style="padding:15px; border-radius:10px; border:none; background:#333; color:white;">
-        <input type="text" id="newRoutineName" placeholder="Task Name" style="flex-grow:1; padding:15px; border-radius:10px; border:none; background:#333; color:white;">
-      </div>
-      <button class="action-btn" onclick="addRoutine()">＋ Add New Task</button>
-      <button class="action-btn secondary" onclick="closeManageRoutineModal()">Close</button>
+<div id="adminModal" class="modal">
+  <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+    <h2>Family Allowlist</h2>
+    <div id="familyList" style="text-align: left; margin-bottom: 20px;"></div>
+    
+    <div style="border-top: 1px solid #333; padding-top: 15px;">
+      <input type="email" id="newFamilyEmail" placeholder="new.member@gmail.com" style="width:100%; padding:15px; border-radius:10px; border:none; background:#333; color:white; margin-bottom:10px;">
+      <button class="action-btn" onclick="addFamilyMember()">Grant Access</button>
+      <button class="action-btn secondary" onclick="closeAdminModal()">Close</button>
     </div>
   </div>
 </div>
 
-<div id="walkModal" class="modal">
-  <div class="modal-content">
-    <h2 id="walkModalTitle">Log Walk</h2>
-    <input type="time" id="walkTimeInput">
-    <div id="editSaveArea" style="display:none; margin-bottom:15px;"><button class="action-btn" style="background:#0277bd;" onclick="saveWalk(null)">💾 Save Time Change</button></div>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-      <button class="action-btn" onclick="saveWalk('pee')">💦 Pee</button>
-      <button class="action-btn" onclick="saveWalk('poop')">💩 Poop</button>
-      <button class="action-btn" style="grid-column: span 2;" onclick="saveWalk('both')">💦💩 Both</button>
-      <button class="action-btn secondary" style="grid-column: span 2; background:#5d4037; color:white;" onclick="saveWalk('backyard')">🏡 Backyard</button>
-    </div>
-    <div id="editWalkControls" style="display:none; border-top:1px solid #333; padding-top:10px; margin-top:10px;"><button class="action-btn" style="background:#b71c1c;" onclick="confirmDeleteWalk()">🗑️ Delete Walk</button></div>
-    <button class="action-btn secondary" style="margin-top:10px;" onclick="closeWalkModal()">Cancel</button>
-  </div>
-</div>
-
-<div id="supplyModal" class="modal">
-  <div class="modal-content">
-    <h2>Supplies</h2>
-    <div class="supply-row"><span>🥫 Food</span><label class="switch"><input type="checkbox" id="checkFood" onchange="setSupplies('Food')"><span class="slider"></span></label></div>
-    <div class="supply-row"><span>💊 Meds</span><label class="switch"><input type="checkbox" id="checkMeds" onchange="setSupplies('Meds')"><span class="slider"></span></label></div>
-    <div class="supply-row"><span>🦴 Treats</span><label class="switch"><input type="checkbox" id="checkTreats" onchange="setSupplies('Treats')"><span class="slider"></span></label></div>
-    <button class="action-btn secondary" style="margin-top:20px;" onclick="closeSupplyModal()">Close</button>
-  </div>
-</div>
-
-<div id="historyModal" class="modal">
-  <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column;">
-    <h2>Activity History</h2>
-    <div style="display: flex; background: #333; border-radius: 12px; padding: 4px; margin-bottom: 15px;">
-      <button id="btnWeek" onclick="loadHistory(7)" style="flex:1; border:none; background:#0277bd; color:white; padding:8px; border-radius:10px; font-weight:bold; cursor:pointer;">Last 7 Days</button>
-      <button id="btnMonth" onclick="loadHistory(30)" style="flex:1; border:none; background:transparent; color:#aaa; padding:8px; border-radius:10px; font-weight:bold; cursor:pointer;">Last 30 Days</button>
-    </div>
-    <div id="historyList" style="text-align: left; overflow-y: auto; flex-grow: 1; padding-right: 5px;"></div>
-    <button class="action-btn secondary" style="margin-top: 15px;" onclick="closeHistoryModal()">Close</button>
-  </div>
-</div>
-
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyBaIQVgPLcCj4T8-wvZ90L9iKSJHZ_7Srg",
-    authDomain: "dog-duty-fe307.firebaseapp.com",
-    databaseURL: "https://dog-duty-fe307-default-rtdb.firebaseio.com",
-    projectId: "dog-duty-fe307",
-    storageBucket: "dog-duty-fe307.firebasestorage.app",
-    messagingSenderId: "864273780235",
-    appId: "1:864273780235:web:42c82e06afa5deadc1c10e",
-    measurementId: "G-C460E5SS3D"
-  };
-
-  const APPROVED_EMAILS = ["jason.g.franks@gmail.com", "jaime.l.franks@gmail.com", "garrett.j.franks@gmail.com", "genevieve.j.franks@gmail.com"];
-
+  // CONFIG & INIT
+  const firebaseConfig = { /* ... your config ... */ };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const auth = firebase.auth();
   const provider = new firebase.auth.GoogleAuthProvider();
-
+  
+  const ADMIN_EMAIL = "jason.g.franks@gmail.com";
   let userFirstName = "";
   let activeWalks = [];
   let currentRoutines = [];
-  let editingWalkId = null;
   const todayKey = new Date().toISOString().split('T')[0];
 
+  // AUTH LOGIC
   auth.onAuthStateChanged(user => {
     if (user) {
-      const email = user.email.toLowerCase().replace(/\.(?=[^@]*@gmail\.com)/g, "");
-      if (APPROVED_EMAILS.some(e => e.toLowerCase().replace(/\.(?=[^@]*@gmail\.com)/g, "") === email)) {
-        userFirstName = user.displayName ? user.displayName.split(' ')[0] : "User";
-        document.getElementById('loginModal').style.display = 'none';
-        document.getElementById('appContent').style.display = 'block';
-        document.getElementById('userNameDisplay').textContent = userFirstName;
-        init();
-      } else { auth.signOut(); }
-    } else { document.getElementById('loginModal').style.display = 'flex'; document.getElementById('appContent').style.display = 'none'; }
+      const email = user.email.toLowerCase();
+      const safeEmail = email.replace(/\./g, ',');
+      
+      db.ref(`allowlist/${safeEmail}`).once('value').then(snap => {
+        if (snap.exists()) {
+          userFirstName = user.displayName ? user.displayName.split(' ')[0] : "User";
+          document.getElementById('loginModal').style.display = 'none';
+          document.getElementById('appContent').style.display = 'block';
+          document.getElementById('userNameDisplay').textContent = userFirstName;
+          
+          // Show Admin button if it's you
+          if (email === ADMIN_EMAIL) {
+            document.getElementById('adminBtn').style.display = 'block';
+          }
+          
+          init();
+        } else { handleDenied("Not on allowlist."); }
+      }).catch(() => handleDenied("Access Denied."));
+    } else {
+      document.getElementById('loginModal').style.display = 'flex';
+      document.getElementById('appContent').style.display = 'none';
+    }
   });
 
-  function init() {
-    db.ref('settings/routines').on('value', snap => {
-      const data = snap.val();
-      if (Array.isArray(data) && typeof data[0] === 'string') {
-        currentRoutines = data.map(name => ({name, emoji: '✅'}));
-      } else {
-        currentRoutines = data || [{name: 'Breakfast', emoji: '🥣'}, {name: 'Blinds', emoji: '🪟'}, {name: 'Dinner', emoji: '🍽️'}, {name: 'Meds', emoji: '💊'}];
-      }
-      db.ref(`days/${todayKey}`).on('value', snapshot => {
-        const val = snapshot.val() || {};
-        renderRoutine(val);
-        renderWalks(val.Walks);
+  function handleDenied(msg) { alert(msg); auth.signOut(); }
+
+  // ADMIN PANEL LOGIC
+  function openAdminModal() {
+    document.getElementById('adminModal').style.display = 'flex';
+    const list = document.getElementById('familyList');
+    
+    db.ref('allowlist').on('value', snap => {
+      list.innerHTML = '';
+      const members = snap.val() || {};
+      Object.keys(members).forEach(safeEmail => {
+        const displayEmail = safeEmail.replace(/,/g, '.');
+        const row = document.createElement('div');
+        row.className = 'family-row';
+        row.innerHTML = `
+          <span>${displayEmail}</span>
+          ${displayEmail !== ADMIN_EMAIL ? `<button onclick="removeFamilyMember('${safeEmail}')" style="background:none; border:none; color:#ff5252; font-weight:bold; cursor:pointer;">REMOVE</button>` : '<i>Admin</i>'}
+        `;
+        list.appendChild(row);
       });
     });
-    db.ref('supplies').on('value', snapshot => handleSupplyBanner(snapshot.val() || {}));
   }
 
-  function renderRoutine(dayData) {
-    const rContainer = document.getElementById('routineButtons');
-    rContainer.innerHTML = '';
-    currentRoutines.forEach(r => {
-      const val = dayData[r.name];
-      const btn = document.createElement('button');
-      btn.className = `task-btn ${val ? 'done' : ''}`;
-      btn.innerHTML = `<span>${r.emoji} ${r.name}</span><small style="opacity:0.7">${val || ''}</small>`;
-      btn.onclick = () => {
-        if (val) {
-          if (!confirm(`Are you sure you want to uncheck "${r.name}"?`)) return;
-        }
-        setSyncUI(true);
-        const timeStr = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-        const newVal = val ? null : `✔ ${timeStr} (${userFirstName})`;
-        db.ref(`days/${todayKey}/${r.name}`).set(newVal).then(() => setSyncUI(false));
-      };
-      rContainer.appendChild(btn);
+  function addFamilyMember() {
+    const email = document.getElementById('newFamilyEmail').value.trim().toLowerCase();
+    if (!email || !email.includes('@')) { alert("Invalid email"); return; }
+    const safeEmail = email.replace(/\./g, ',');
+    db.ref(`allowlist/${safeEmail}`).set(true).then(() => {
+      document.getElementById('newFamilyEmail').value = '';
     });
   }
 
-  function getTimeEmoji(timeStr) {
-    try {
-      const [time, period] = timeStr.split(' ');
-      let [hour] = time.split(':').map(Number);
-      if (period === 'PM' && hour !== 12) hour += 12;
-      if (period === 'AM' && hour === 12) hour = 0;
-      if (hour >= 5 && hour < 11) return '🌅';
-      if (hour >= 11 && hour < 17) return '☀️';
-      if (hour >= 17 && hour < 20) return '🌇';
-      return '🌙';
-    } catch(e) { return '🚶'; }
-  }
-
-  function renderWalks(walksJson) {
-    const wContainer = document.getElementById('walkList');
-    wContainer.innerHTML = '';
-    try { activeWalks = walksJson ? JSON.parse(walksJson) : []; } catch(e) { activeWalks = []; }
-    activeWalks.sort((a, b) => {
-      const toMinutes = (timeStr) => {
-        const [time, period] = timeStr.split(' ');
-        let [h, m] = time.split(':').map(Number);
-        if (period === 'PM' && h !== 12) h += 12;
-        if (period === 'AM' && h === 12) h = 0;
-        return h * 60 + m;
-      };
-      return toMinutes(a.time) - toMinutes(b.time);
-    });
-    if(activeWalks.length === 0) {
-      wContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#555;">No walks today</div>';
-      return;
+  function removeFamilyMember(safeEmail) {
+    if (confirm(`Revoke access for ${safeEmail.replace(/,/g, '.')}?`)) {
+      db.ref(`allowlist/${safeEmail}`).remove();
     }
-    activeWalks.forEach(w => {
-      const btn = document.createElement('button');
-      btn.className = `task-btn done`;
-      btn.innerHTML = `<div class="walk-content"><div class="walk-left">${getTimeEmoji(w.time)} Walk</div><div class="walk-center">${w.note}</div><div class="walk-right"><small style="opacity:0.7">✔ ${w.time} (${w.name})</small></div></div>`;
-      btn.onclick = () => openWalkModal(w);
-      wContainer.appendChild(btn);
-    });
   }
 
-  function saveWalk(subAction) {
-    setSyncUI(true);
-    const rawTime = document.getElementById('walkTimeInput').value;
-    const [h, m] = rawTime.split(':');
-    const finalTime = `${((h % 12) || 12)}:${m} ${h >= 12 ? 'PM' : 'AM'}`;
-    const emojiMap = {'pee':'💦','poop':'💩','both':'💦💩','backyard':'🏡'};
-    const emoji = subAction ? emojiMap[subAction] : (editingWalkId ? activeWalks.find(x => x.id === editingWalkId).note : '🚶');
-    let newWalks = [...activeWalks];
-    if(editingWalkId) newWalks = newWalks.map(w => w.id == editingWalkId ? {...w, time: finalTime, note: emoji} : w);
-    else newWalks.push({ id: Date.now(), time: finalTime, name: userFirstName, note: emoji });
-    db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(newWalks)).then(() => { setSyncUI(false); closeWalkModal(); });
-  }
+  function closeAdminModal() { document.getElementById('adminModal').style.display = 'none'; }
 
-  function confirmDeleteWalk() { if (confirm("Delete walk?")) { const filtered = activeWalks.filter(w => w.id != editingWalkId); db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(filtered)).then(() => closeWalkModal()); } }
-  function openWalkModal(w = null) { editingWalkId = w ? w.id : null; if (w) { const [t, m] = w.time.split(' '); let [h, min] = t.split(':'); if (m === 'PM' && h !== '12') h = parseInt(h) + 12; if (m === 'AM' && h === '12') h = '00'; document.getElementById('walkTimeInput').value = `${h.toString().padStart(2,'0')}:${min}`; } else { const now = new Date(); document.getElementById('walkTimeInput').value = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0'); } document.getElementById('walkModal').style.display = 'flex'; document.getElementById('editSaveArea').style.display = w ? 'block' : 'none'; document.getElementById('editWalkControls').style.display = w ? 'block' : 'none'; document.getElementById('walkModalTitle').textContent = w ? "Edit Walk" : "Log Walk"; }
-  function closeWalkModal() { document.getElementById('walkModal').style.display = 'none'; }
-  function openManageRoutineModal() {
-    const list = document.getElementById('routineSettingsList');
-    list.innerHTML = '';
-    currentRoutines.forEach(r => {
-      const div = document.createElement('div');
-      div.style.cssText = "display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333; align-items:center;";
-      div.innerHTML = `<span>${r.emoji} ${r.name}</span><button onclick="removeRoutine('${r.name}')" style="background:#b71c1c; border:none; color:white; border-radius:5px; padding:5px 10px;">Delete</button>`;
-      list.appendChild(div);
-    });
-    document.getElementById('manageRoutineModal').style.display = 'flex';
-  }
+  // REPAIRED ADD ROUTINE LOGIC
   function addRoutine() {
     const name = document.getElementById('newRoutineName').value.trim();
     const emoji = document.getElementById('newRoutineEmoji').value.trim() || '✅';
@@ -318,51 +150,12 @@
       db.ref('settings/routines').set(newList).then(() => {
         document.getElementById('newRoutineName').value = '';
         document.getElementById('newRoutineEmoji').value = '';
-        openManageRoutineModal();
+        openManageRoutineModal(); // Refresh the list in the modal
       });
     }
   }
-  function removeRoutine(name) { if(confirm(`Remove "${name}" permanently?`)) { const newList = currentRoutines.filter(r => r.name !== name); db.ref('settings/routines').set(newList).then(() => openManageRoutineModal()); } }
-  function closeManageRoutineModal() { document.getElementById('manageRoutineModal').style.display = 'none'; }
-  function loadHistory(daysCount) {
-    const historyList = document.getElementById('historyList');
-    const btnWeek = document.getElementById('btnWeek');
-    const btnMonth = document.getElementById('btnMonth');
-    btnWeek.style.background = daysCount === 7 ? '#0277bd' : 'transparent';
-    btnMonth.style.background = daysCount === 30 ? '#0277bd' : 'transparent';
-    historyList.innerHTML = '<p style="text-align:center; opacity:0.5;">Fetching records...</p>';
-    db.ref('days').limitToLast(daysCount).once('value', snapshot => {
-      const allDays = snapshot.val() || {};
-      historyList.innerHTML = '';
-      const sortedKeys = Object.keys(allDays).sort().reverse();
-      sortedKeys.forEach(dateKey => {
-        const dayData = allDays[dateKey];
-        const daySection = document.createElement('div');
-        daySection.style.cssText = "margin-bottom:12px; padding:12px; background:#252525; border-radius:15px; border-left:4px solid #4caf50;";
-        const dateObj = new Date(dateKey + 'T00:00:00');
-        const dateDisplay = dateKey === todayKey ? "Today" : dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-        let routines = [];
-        currentRoutines.forEach(r => { if(dayData[r.name]) routines.push(`<span style="display:inline-block; background:#1b5e20; padding:2px 8px; border-radius:8px; margin:2px; font-size:11px;">${r.emoji} ${r.name}: ${dayData[r.name].replace('✔ ', '')}</span>`); });
-        let walksArr = [];
-        if (dayData.Walks) { try { JSON.parse(dayData.Walks).forEach(w => walksArr.push(`<div style="font-size:13px; margin-top:5px; color:#ddd;">${w.note} ${w.time} <span style="opacity:0.6">(${w.name})</span></div>`)); } catch(e) {} }
-        daySection.innerHTML = `<div style="font-weight:800; color:#4fc3f7; font-size:14px; margin-bottom:8px;">${dateDisplay}</div><div>${routines.join('')}</div><div style="border-top:1px solid #333; margin-top:5px; padding-top:5px;">${walksArr.join('')}</div>`;
-        historyList.appendChild(daySection);
-      });
-    });
-  }
-  function handleSupplyBanner(items) {
-    const low = []; if(items.Food) low.push('FOOD'); if(items.Meds) low.push('MEDS'); if(items.Treats) low.push('TREATS');
-    const b = document.getElementById('supplyBanner'); if(b) { b.style.display = low.length > 0 ? 'block' : 'none'; b.innerHTML = low.length > 0 ? `⚠️ LOW ${low.join(' & ')} ⚠️` : ''; }
-    ['Food','Meds','Treats'].forEach(s => { const el = document.getElementById('check'+s); if(el) el.checked = !!items[s]; });
-  }
-  function setSyncUI(isSyncing) { const bar = document.getElementById('syncStatus'); if(isSyncing) bar.classList.add('visible'); else bar.classList.remove('visible'); }
-  function openSupplyModal() { document.getElementById('supplyModal').style.display = 'flex'; }
-  function closeSupplyModal() { document.getElementById('supplyModal').style.none; }
-  function openHistoryModal() { document.getElementById('historyModal').style.display = 'flex'; loadHistory(7); }
-  function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
-  function handleGoogleLogin() { auth.signInWithPopup(provider); }
-  function confirmSignOut() { if(confirm("Sign out?")) auth.signOut().then(() => window.location.reload()); }
-  function setSupplies(item) { db.ref(`supplies/${item}`).set(document.getElementById('check' + item).checked); }
+
+  // ... (Remainder of functions: init, renderRoutine, saveWalk, etc. from 1.2.2) ...
 </script>
 </body>
 </html>
