@@ -50,17 +50,27 @@
     }
     button.task-btn.done { background: #2e7d32; color: #fff; }
 
-    /* FIXED WALK LAYOUT: 3 Pillars */
+    /* UPDATED WALK LAYOUT */
     .walk-content {
       display: grid;
-      grid-template-columns: 40px 1fr auto; /* Fixed left, flexible center, auto right */
+      grid-template-columns: auto 1fr auto; /* Fits label, fills center, fits stamp */
       align-items: center;
       width: 100%;
-      gap: 10px;
+      gap: 12px;
     }
-    .walk-left { text-align: left; font-size: 22px; }
-    .walk-center { text-align: center; font-size: 24px; }
-    .walk-right { text-align: right; }
+    .walk-left { 
+      text-align: left; 
+      font-size: 18px; 
+      white-space: nowrap; 
+      font-weight: bold;
+    }
+    .walk-center { 
+      text-align: left; 
+      font-size: 24px; 
+    }
+    .walk-right { 
+      text-align: right; 
+    }
 
     .add-walk-btn { width: 100%; background: #0277bd; color: white; border: none; padding: 18px; border-radius: 18px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); }
@@ -79,10 +89,12 @@
 </head>
 <body>
 
+<div id="supplyBanner"></div>
+
 <main id="appContent">
   <header>
     <div class="brand-area">
-      <img src="dogdutyicon.png" alt="Logo">
+      <img src="logo.png" alt="Logo">
       <h1>DOG DUTY</h1>
       <span id="syncStatus">Syncing...</span>
     </div>
@@ -105,7 +117,7 @@
 
 <div id="loginModal" class="modal" style="display:flex;">
   <div class="modal-content">
-    <img src="logo.png" style="height:100px; width:100px; margin-bottom:20px; border-radius:20px;">
+    <img src="dogdutyicon.png" style="height:100px; width:100px; margin-bottom:20px; border-radius:20px;">
     <h2>Family Access</h2>
     <p style="color:#aaa; margin-bottom:20px;">Sign in to manage Dog Duty.</p>
     <button class="action-btn" onclick="handleGoogleLogin()" style="background:#4285F4; display:flex; align-items:center; justify-content:center; gap:10px; width:100%;">
@@ -276,10 +288,10 @@
       
       const timeOfDayEmoji = getTimeEmoji(w.time);
       
-      // GRID LAYOUT: Left (Sun/Moon), Center (Activity), Right (Stamp)
+      // GRID LAYOUT: Left (Emoji Walk), Center (Note/Action), Right (Stamp)
       btn.innerHTML = `
         <div class="walk-content">
-          <div class="walk-left">${timeOfDayEmoji}</div>
+          <div class="walk-left">${timeOfDayEmoji} Walk</div>
           <div class="walk-center">${w.note}</div>
           <div class="walk-right"><small style="opacity:0.7">✔ ${w.time} (${w.name})</small></div>
         </div>
@@ -356,4 +368,3 @@
 </script>
 </body>
 </html>
-
