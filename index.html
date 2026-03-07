@@ -22,32 +22,20 @@
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #121212; color: #fff; margin: 0; padding: 0; font-size: 16px; overflow-x: hidden; }
     
     #supplyBanner { display: none; background: #b71c1c; color: white; padding: 14px; text-align: center; font-weight: 800; font-size: 16px; border-bottom: 3px solid #ff5252; text-transform: uppercase; }
-    
     main { padding: 12px; display: none; }
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #333; }
-    
     .brand-area { display: flex; align-items: center; gap: 10px; }
     .brand-area img { height: 30px; width: auto; max-width: 120px; border-radius: 4px; }
-    
     h1 { margin: 0; font-size: 20px; white-space: nowrap; font-weight: 800; letter-spacing: -0.5px; }
     #syncStatus { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #4fc3f7; opacity: 0; transition: opacity 0.3s; }
     #syncStatus.visible { opacity: 1; }
     
-    .header-controls { display: flex; gap: 8px; }
     .icon-btn { background: #333; padding: 8px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; color: #fff; cursor: pointer; border: none; display: flex; align-items: center; gap: 6px; }
-    
     .list-container { display: flex; flex-direction: column; gap: 12px; }
     .section-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; margin: 15px 0 5px 5px; }
     
-    button.task-btn { 
-      width: 100%; text-align: left; font-size: 18px; padding: 20px; border-radius: 18px; border: none; background: #2c2c2c; color: #e0e0e0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.15s ease; 
-    }
+    button.task-btn { width: 100%; text-align: left; font-size: 18px; padding: 20px; border-radius: 18px; border: none; background: #2c2c2c; color: #e0e0e0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.15s ease; }
     button.task-btn.done { background: #2e7d32; color: #fff; }
-
-    .walk-content { display: grid; grid-template-columns: auto 1fr auto; align-items: center; width: 100%; gap: 12px; }
-    .walk-left { text-align: left; font-size: 18px; white-space: nowrap; font-weight: normal; }
-    .walk-center { text-align: left; font-size: 24px; }
-    .walk-right { text-align: right; }
 
     .add-walk-btn { width: 100%; background: #0277bd; color: white; border: none; padding: 18px; border-radius: 18px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); }
@@ -64,32 +52,11 @@
     input:checked + .slider { background-color: #d32f2f; }
     input:checked + .slider:before { transform: translateX(26px); }
 
-    input[type="time"] { 
-      width: 100%; 
-      display: block;
-      margin: 0 auto 15px auto; 
-      padding: 15px; 
-      font-size: 28px; 
-      border-radius: 14px; 
-      border: 2px solid #444; 
-      background: #222; 
-      color: white; 
-      text-align: center;
-      -webkit-appearance: none;
-    }
+    .emoji-picker { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 15px 0; background: #222; padding: 10px; border-radius: 12px; }
+    .emoji-option { font-size: 24px; cursor: pointer; padding: 8px; border-radius: 8px; border: 2px solid transparent; transition: 0.2s; }
+    .emoji-option.selected { border-color: #0277bd; background: #333; }
 
-    .version-label {
-      text-align: center; 
-      margin-top: 40px; 
-      opacity: 0.5;
-      font-size: 12px;
-      color: #666;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      cursor: pointer;
-      padding: 10px;
-    }
-    .version-label:active { opacity: 1; color: #0277bd; }
+    .version-label { text-align: center; margin-top: 40px; opacity: 0.5; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; padding: 10px; }
   </style>
 </head>
 <body>
@@ -108,7 +75,10 @@
     </div>
   </header>
 
-  <div class="section-label">Routine</div>
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div class="section-label">Routine</div>
+    <div style="font-size:12px; color:#0277bd; cursor:pointer; margin-right:10px;" onclick="openManageRoutineModal()">⚙️ Edit</div>
+  </div>
   <div id="routineButtons" class="list-container"></div>
 
   <div class="section-label">Walks</div>
@@ -120,7 +90,7 @@
     <button class="action-btn secondary" style="background:#455a64; margin-top:10px;" onclick="openHistoryModal()">📅 View History</button>
   </div>
 
-  <div class="version-label" onclick="window.location.reload(true)">Version 1.0.9</div>
+  <div class="version-label" onclick="window.location.reload(true)">Version 1.1.1</div>
 </main>
 
 <div id="loginModal" class="modal" style="display:flex;">
@@ -131,55 +101,29 @@
     <button class="action-btn" onclick="handleGoogleLogin()" style="background:#4285F4; display:flex; align-items:center; justify-content:center; gap:10px; width:100%;">
       Sign in with Google
     </button>
-    <div id="authError" style="color:#ff5252; margin-top:15px; font-size:12px; display:none;"></div>
   </div>
 </div>
 
-<div id="walkModal" class="modal">
-  <div class="modal-content">
-    <h2 id="walkModalTitle">Log Walk</h2>
+<div id="manageRoutineModal" class="modal">
+  <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+    <h2>Manage Routines</h2>
+    <div id="routineSettingsList" style="text-align:left; margin-bottom:20px;"></div>
     
-    <input type="time" id="walkTimeInput">
-    
-    <div id="editSaveArea" style="display:none; margin-bottom:15px;">
-      <button class="action-btn" style="background:#0277bd;" onclick="saveWalk(null)">💾 Save Time Change</button>
-    </div>
+    <div style="border-top: 1px solid #333; padding-top: 15px;">
+      <input type="text" id="newRoutineName" placeholder="Task Name (e.g. Brush Teeth)" style="width:100%; padding:15px; border-radius:10px; border:none; background:#333; color:white;">
+      
+      <div class="emoji-picker" id="emojiPicker">
+        </div>
 
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-      <button class="action-btn" onclick="saveWalk('pee')">💦 Pee</button>
-      <button class="action-btn" onclick="saveWalk('poop')">💩 Poop</button>
-      <button class="action-btn" style="grid-column: span 2;" onclick="saveWalk('both')">💦💩 Both</button>
-      <button class="action-btn secondary" style="grid-column: span 2; background:#5d4037; color:white;" onclick="saveWalk('backyard')">🏡 Backyard</button>
+      <button class="action-btn" onclick="addRoutine()">＋ Add New Task</button>
+      <button class="action-btn secondary" onclick="closeManageRoutineModal()">Close</button>
     </div>
-
-    <div id="editWalkControls" style="display:none; border-top:1px solid #333; padding-top:10px; margin-top:10px;">
-      <button class="action-btn" style="background:#b71c1c;" onclick="confirmDeleteWalk()">🗑️ Delete Walk</button>
-    </div>
-    <button class="action-btn secondary" style="margin-top:10px;" onclick="closeWalkModal()">Cancel</button>
   </div>
 </div>
 
-<div id="supplyModal" class="modal">
-  <div class="modal-content">
-    <h2>Supplies</h2>
-    <div class="supply-row"><span>🥫 Food</span><label class="switch"><input type="checkbox" id="checkFood" onchange="setSupplies('Food')"><span class="slider"></span></label></div>
-    <div class="supply-row"><span>💊 Meds</span><label class="switch"><input type="checkbox" id="checkMeds" onchange="setSupplies('Meds')"><span class="slider"></span></label></div>
-    <div class="supply-row"><span>🦴 Treats</span><label class="switch"><input type="checkbox" id="checkTreats" onchange="setSupplies('Treats')"><span class="slider"></span></label></div>
-    <button class="action-btn secondary" style="margin-top:20px;" onclick="closeSupplyModal()">Close</button>
-  </div>
-</div>
-
-<div id="historyModal" class="modal">
-  <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column;">
-    <h2 style="margin-top: 0;">Activity History</h2>
-    <div style="display: flex; background: #333; border-radius: 12px; padding: 4px; margin-bottom: 15px;">
-      <button id="btnWeek" onclick="loadHistory(7)" style="flex:1; border:none; background:#0277bd; color:white; padding:8px; border-radius:10px; font-weight:bold; cursor:pointer;">Last 7 Days</button>
-      <button id="btnMonth" onclick="loadHistory(30)" style="flex:1; border:none; background:transparent; color:#aaa; padding:8px; border-radius:10px; font-weight:bold; cursor:pointer;">Last 30 Days</button>
-    </div>
-    <div id="historyList" style="text-align: left; overflow-y: auto; flex-grow: 1; padding-right: 5px;"></div>
-    <button class="action-btn secondary" style="margin-top: 15px;" onclick="closeHistoryModal()">Close</button>
-  </div>
-</div>
+<div id="walkModal" class="modal"><div class="modal-content"><h2 id="walkModalTitle">Log Walk</h2><input type="time" id="walkTimeInput"><div id="editSaveArea" style="display:none; margin-bottom:15px;"><button class="action-btn" style="background:#0277bd;" onclick="saveWalk(null)">💾 Save Time Change</button></div><div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;"><button class="action-btn" onclick="saveWalk('pee')">💦 Pee</button><button class="action-btn" onclick="saveWalk('poop')">💩 Poop</button><button class="action-btn" style="grid-column: span 2;" onclick="saveWalk('both')">💦💩 Both</button><button class="action-btn secondary" style="grid-column: span 2; background:#5d4037; color:white;" onclick="saveWalk('backyard')">🏡 Backyard</button></div><div id="editWalkControls" style="display:none; border-top:1px solid #333; padding-top:10px; margin-top:10px;"><button class="action-btn" style="background:#b71c1c;" onclick="confirmDeleteWalk()">🗑️ Delete Walk</button></div><button class="action-btn secondary" style="margin-top:10px;" onclick="closeWalkModal()">Cancel</button></div></div>
+<div id="supplyModal" class="modal"><div class="modal-content"><h2>Supplies</h2><div class="supply-row"><span>🥫 Food</span><label class="switch"><input type="checkbox" id="checkFood" onchange="setSupplies('Food')"><span class="slider"></span></label></div><div class="supply-row"><span>💊 Meds</span><label class="switch"><input type="checkbox" id="checkMeds" onchange="setSupplies('Meds')"><span class="slider"></span></label></div><div class="supply-row"><span>🦴 Treats</span><label class="switch"><input type="checkbox" id="checkTreats" onchange="setSupplies('Treats')"><span class="slider"></span></label></div><button class="action-btn secondary" style="margin-top:20px;" onclick="closeSupplyModal()">Close</button></div></div>
+<div id="historyModal" class="modal"><div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column;"><h2 style="margin-top: 0;">Activity History</h2><div style="display: flex; background: #333; border-radius: 12px; padding: 4px; margin-bottom: 15px;"><button id="btnWeek" onclick="loadHistory(7)" style="flex:1; border:none; background:#0277bd; color:white; padding:8px; border-radius:10px; font-weight:bold; cursor:pointer;">Last 7 Days</button><button id="btnMonth" onclick="loadHistory(30)" style="flex:1; border:none; background:transparent; color:#aaa; padding:8px; border-radius:10px; font-weight:bold; cursor:pointer;">Last 30 Days</button></div><div id="historyList" style="text-align: left; overflow-y: auto; flex-grow: 1; padding-right: 5px;"></div><button class="action-btn secondary" style="margin-top: 15px;" onclick="closeHistoryModal()">Close</button></div></div>
 
 <script>
   const firebaseConfig = {
@@ -193,12 +137,8 @@
     measurementId: "G-C460E5SS3D"
   };
 
-  const APPROVED_EMAILS = [
-    "jason.g.franks@gmail.com",
-    "jaime.l.franks@gmail.com",
-    "garrett.j.franks@gmail.com",
-    "genevieve.j.franks@gmail.com"
-  ];
+  const APPROVED_EMAILS = ["jason.g.franks@gmail.com", "jaime.l.franks@gmail.com", "garrett.j.franks@gmail.com", "genevieve.j.franks@gmail.com"];
+  const PRESET_EMOJIS = ['🥣','🍽️','🪟','💊','💧','✂️','🪥','🦴','🥩','🧸','🧼','🌳','🧶'];
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
@@ -207,237 +147,149 @@
 
   let userFirstName = "";
   let activeWalks = [];
-  let editingWalkId = null;
-  let activeRequests = 0;
+  let currentRoutines = []; // Now stores objects: {name, emoji}
+  let selectedEmoji = PRESET_EMOJIS[0];
   const todayKey = new Date().toISOString().split('T')[0];
 
   auth.onAuthStateChanged(user => {
     if (user) {
-      const email = user.email.toLowerCase();
-      const normalizedEmail = email.replace(/\.(?=[^@]*@gmail\.com)/g, "");
-      const isApproved = APPROVED_EMAILS.some(e => {
-        const approvedNormalized = e.toLowerCase().replace(/\.(?=[^@]*@gmail\.com)/g, "");
-        return approvedNormalized === normalizedEmail;
-      });
-
-      if (isApproved) {
+      const email = user.email.toLowerCase().replace(/\.(?=[^@]*@gmail\.com)/g, "");
+      if (APPROVED_EMAILS.some(e => e.toLowerCase().replace(/\.(?=[^@]*@gmail\.com)/g, "") === email)) {
         userFirstName = user.displayName ? user.displayName.split(' ')[0] : "User";
         document.getElementById('loginModal').style.display = 'none';
         document.getElementById('appContent').style.display = 'block';
         document.getElementById('userNameDisplay').textContent = userFirstName;
         init();
-      } else {
-        alert("Denied: " + email);
-        auth.signOut();
-      }
-    } else {
-      document.getElementById('loginModal').style.display = 'flex';
-      document.getElementById('appContent').style.display = 'none';
-    }
+      } else { auth.signOut(); }
+    } else { document.getElementById('loginModal').style.display = 'flex'; document.getElementById('appContent').style.display = 'none'; }
   });
 
-  function handleGoogleLogin() {
-    auth.signInWithPopup(provider).catch(err => alert(err.message));
-  }
-
-  function confirmSignOut() {
-    if(confirm("Sign out?")) auth.signOut().then(() => window.location.reload());
-  }
-
-  function setSyncUI(isSyncing) {
-    const bar = document.getElementById('syncStatus');
-    if (isSyncing) { activeRequests++; bar.classList.add('visible'); } 
-    else { activeRequests = Math.max(0, activeRequests - 1); if (activeRequests === 0) bar.classList.remove('visible'); }
-  }
-
   function init() {
-    db.ref(`days/${todayKey}`).on('value', snapshot => {
-      const data = snapshot.val() || {};
-      renderRoutine(data);
-      renderWalks(data.Walks);
+    db.ref('settings/routines').on('value', snap => {
+      const data = snap.val();
+      // Backwards compatibility: convert old string arrays to objects if needed
+      if (Array.isArray(data) && typeof data[0] === 'string') {
+        currentRoutines = data.map(name => ({name, emoji: '✅'}));
+      } else {
+        currentRoutines = data || [
+          {name: 'Breakfast', emoji: '🥣'}, {name: 'Blinds', emoji: '🪟'}, 
+          {name: 'Dinner', emoji: '🍽️'}, {name: 'Meds', emoji: '💊'}
+        ];
+      }
+      db.ref(`days/${todayKey}`).on('value', snapshot => {
+        renderRoutine(snapshot.val() || {});
+        renderWalks((snapshot.val() || {}).Walks);
+      });
     });
-    db.ref('supplies').on('value', snapshot => {
-      handleSupplyBanner(snapshot.val() || {});
-    });
+    db.ref('supplies').on('value', snapshot => handleSupplyBanner(snapshot.val() || {}));
+    setupEmojiPicker();
   }
 
-  function renderRoutine(data) {
+  function renderRoutine(dayData) {
     const rContainer = document.getElementById('routineButtons');
     rContainer.innerHTML = '';
-    const tasks = ['Breakfast', 'Blinds', 'Dinner', 'Meds'];
-    const emojis = {'Breakfast':'🥣','Dinner':'🍽️','Blinds':'🪟','Meds':'💊'};
-    tasks.forEach(t => {
-      const val = data[t];
+    currentRoutines.forEach(r => {
+      const val = dayData[r.name];
       const btn = document.createElement('button');
       btn.className = `task-btn ${val ? 'done' : ''}`;
-      btn.innerHTML = `<span>${emojis[t]} ${t}</span><small style="opacity:0.7">${val || ''}</small>`;
+      btn.innerHTML = `<span>${r.emoji} ${r.name}</span><small style="opacity:0.7">${val || ''}</small>`;
       btn.onclick = () => {
         setSyncUI(true);
         const timeStr = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         const newVal = val ? null : `✔ ${timeStr} (${userFirstName})`;
-        db.ref(`days/${todayKey}/${t}`).set(newVal).then(() => setSyncUI(false));
+        db.ref(`days/${todayKey}/${r.name}`).set(newVal).then(() => setSyncUI(false));
       };
       rContainer.appendChild(btn);
     });
   }
 
-  function getTimeEmoji(timeStr) {
-    try {
-      const [time, period] = timeStr.split(' ');
-      let [hour] = time.split(':').map(Number);
-      if (period === 'PM' && hour !== 12) hour += 12;
-      if (period === 'AM' && hour === 12) hour = 0;
-      if (hour >= 5 && hour < 11) return '🌅';
-      if (hour >= 11 && hour < 17) return '☀️';
-      if (hour >= 17 && hour < 20) return '🌇';
-      return '🌙';
-    } catch(e) { return '🚶'; }
-  }
-
-  function renderWalks(walksJson) {
-    const wContainer = document.getElementById('walkList');
-    wContainer.innerHTML = '';
-    try { activeWalks = walksJson ? JSON.parse(walksJson) : []; } catch(e) { activeWalks = []; }
-    
-    if(activeWalks.length === 0) {
-      wContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#555;">No walks today</div>';
-      return;
-    }
-
-    activeWalks.forEach(w => {
-      const btn = document.createElement('button');
-      btn.id = 'walk-' + w.id;
-      btn.className = `task-btn done`;
-      const timeOfDayEmoji = getTimeEmoji(w.time);
-      btn.innerHTML = `
-        <div class="walk-content">
-          <div class="walk-left">${timeOfDayEmoji} Walk</div>
-          <div class="walk-center">${w.note}</div>
-          <div class="walk-right"><small style="opacity:0.7">✔ ${w.time} (${w.name})</small></div>
-        </div>
-      `;
-      btn.onclick = () => openWalkModal(w);
-      wContainer.appendChild(btn);
+  function setupEmojiPicker() {
+    const picker = document.getElementById('emojiPicker');
+    picker.innerHTML = '';
+    PRESET_EMOJIS.forEach(e => {
+      const span = document.createElement('span');
+      span.className = `emoji-option ${e === selectedEmoji ? 'selected' : ''}`;
+      span.textContent = e;
+      span.onclick = () => {
+        selectedEmoji = e;
+        setupEmojiPicker();
+      };
+      picker.appendChild(span);
     });
   }
 
-  function saveWalk(subAction) {
-    setSyncUI(true);
-    const rawTime = document.getElementById('walkTimeInput').value;
-    const [h, m] = rawTime.split(':');
-    const finalTime = `${((h % 12) || 12)}:${m} ${h >= 12 ? 'PM' : 'AM'}`;
-    const emojiMap = {'pee':'💦','poop':'💩','both':'💦💩','backyard':'🏡'};
-    const emoji = subAction ? emojiMap[subAction] : (editingWalkId ? activeWalks.find(x => x.id === editingWalkId).note : '🚶');
-    let newWalks = [...activeWalks];
-    if(editingWalkId) {
-      newWalks = newWalks.map(w => w.id == editingWalkId ? {...w, time: finalTime, note: emoji} : w);
-    } else {
-      newWalks.push({ id: Date.now(), time: finalTime, name: userFirstName, note: emoji });
-    }
-    db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(newWalks)).then(() => { setSyncUI(false); closeWalkModal(); });
-  }
-
-  function confirmDeleteWalk() {
-    if (confirm("Delete walk?")) {
-      const filtered = activeWalks.filter(w => w.id != editingWalkId);
-      db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(filtered)).then(() => closeWalkModal());
-    }
-  }
-
-  function setSupplies(item) {
-    db.ref(`supplies/${item}`).set(document.getElementById('check' + item).checked);
-  }
-
-  function handleSupplyBanner(items) {
-    const low = [];
-    if(items.Food) low.push('FOOD'); if(items.Meds) low.push('MEDS'); if(items.Treats) low.push('TREATS');
-    const b = document.getElementById('supplyBanner');
-    if(b) {
-      b.style.display = low.length > 0 ? 'block' : 'none';
-      b.innerHTML = low.length > 0 ? `⚠️ LOW ${low.join(' & ')} ⚠️` : '';
-    }
-    ['Food','Meds','Treats'].forEach(s => {
-      const el = document.getElementById('check'+s);
-      if(el) el.checked = !!items[s];
+  function openManageRoutineModal() {
+    const list = document.getElementById('routineSettingsList');
+    list.innerHTML = '';
+    currentRoutines.forEach(r => {
+      const div = document.createElement('div');
+      div.style.cssText = "display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333; align-items:center;";
+      div.innerHTML = `<span>${r.emoji} ${r.name}</span><button onclick="removeRoutine('${r.name}')" style="background:#b71c1c; border:none; color:white; border-radius:5px; padding:5px 10px;">Delete</button>`;
+      list.appendChild(div);
     });
+    document.getElementById('manageRoutineModal').style.display = 'flex';
   }
 
-  function openWalkModal(w = null) {
-    editingWalkId = w ? w.id : null;
-    const now = new Date();
-    if (w) {
-      const [t, m] = w.time.split(' ');
-      let [h, min] = t.split(':');
-      if (m === 'PM' && h !== '12') h = parseInt(h) + 12;
-      if (m === 'AM' && h === '12') h = '00';
-      document.getElementById('walkTimeInput').value = `${h.toString().padStart(2,'0')}:${min}`;
-    } else {
-      document.getElementById('walkTimeInput').value = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+  function addRoutine() {
+    const name = document.getElementById('newRoutineName').value.trim();
+    if(name && !currentRoutines.find(r => r.name === name)) {
+      const newList = [...currentRoutines, {name, emoji: selectedEmoji}];
+      db.ref('settings/routines').set(newList).then(() => {
+        document.getElementById('newRoutineName').value = '';
+        openManageRoutineModal();
+      });
     }
-    document.getElementById('walkModal').style.display = 'flex';
-    document.getElementById('editSaveArea').style.display = w ? 'block' : 'none';
-    document.getElementById('editWalkControls').style.display = w ? 'block' : 'none';
-    document.getElementById('walkModalTitle').textContent = w ? "Edit Walk" : "Log Walk";
   }
 
-  function closeWalkModal() { document.getElementById('walkModal').style.display = 'none'; }
+  function removeRoutine(name) {
+    if(confirm(`Remove "${name}" permanently?`)) {
+      const newList = currentRoutines.filter(r => r.name !== name);
+      db.ref('settings/routines').set(newList).then(() => openManageRoutineModal());
+    }
+  }
+
+  // Standard Support Functions
+  function closeManageRoutineModal() { document.getElementById('manageRoutineModal').style.display = 'none'; }
+  function handleGoogleLogin() { auth.signInWithPopup(provider); }
+  function confirmSignOut() { if(confirm("Sign out?")) auth.signOut().then(() => window.location.reload()); }
+  function setSyncUI(isSyncing) { const bar = document.getElementById('syncStatus'); if(isSyncing) bar.classList.add('visible'); else bar.classList.remove('visible'); }
   function openSupplyModal() { document.getElementById('supplyModal').style.display = 'flex'; }
   function closeSupplyModal() { document.getElementById('supplyModal').style.display = 'none'; }
-
-  function openHistoryModal() {
-    document.getElementById('historyModal').style.display = 'flex';
-    loadHistory(7);
-  }
-
+  function openWalkModal(w = null) { editingWalkId = w ? w.id : null; if (w) { const [t, m] = w.time.split(' '); let [h, min] = t.split(':'); if (m === 'PM' && h !== '12') h = parseInt(h) + 12; if (m === 'AM' && h === '12') h = '00'; document.getElementById('walkTimeInput').value = `${h.toString().padStart(2,'0')}:${min}`; } else { const now = new Date(); document.getElementById('walkTimeInput').value = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0'); } document.getElementById('walkModal').style.display = 'flex'; document.getElementById('editSaveArea').style.display = w ? 'block' : 'none'; document.getElementById('editWalkControls').style.display = w ? 'block' : 'none'; document.getElementById('walkModalTitle').textContent = w ? "Edit Walk" : "Log Walk"; }
+  function closeWalkModal() { document.getElementById('walkModal').style.display = 'none'; }
+  function saveWalk(subAction) { setSyncUI(true); const rawTime = document.getElementById('walkTimeInput').value; const [h, m] = rawTime.split(':'); const finalTime = `${((h % 12) || 12)}:${m} ${h >= 12 ? 'PM' : 'AM'}`; const emojiMap = {'pee':'💦','poop':'💩','both':'💦💩','backyard':'🏡'}; const emoji = subAction ? emojiMap[subAction] : (editingWalkId ? activeWalks.find(x => x.id === editingWalkId).note : '🚶'); let newWalks = [...activeWalks]; if(editingWalkId) newWalks = newWalks.map(w => w.id == editingWalkId ? {...w, time: finalTime, note: emoji} : w); else newWalks.push({ id: Date.now(), time: finalTime, name: userFirstName, note: emoji }); db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(newWalks)).then(() => { setSyncUI(false); closeWalkModal(); }); }
+  function confirmDeleteWalk() { if (confirm("Delete walk?")) { const filtered = activeWalks.filter(w => w.id != editingWalkId); db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(filtered)).then(() => closeWalkModal()); } }
+  function renderWalks(walksJson) { const wContainer = document.getElementById('walkList'); wContainer.innerHTML = ''; try { activeWalks = walksJson ? JSON.parse(walksJson) : []; } catch(e) { activeWalks = []; } if(activeWalks.length === 0) { wContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#555;">No walks today</div>'; return; } activeWalks.forEach(w => { const btn = document.createElement('button'); btn.className = `task-btn done`; btn.innerHTML = `<div class="walk-content"><div class="walk-left">🚶 Walk</div><div class="walk-center">${w.note}</div><div class="walk-right"><small style="opacity:0.7">✔ ${w.time} (${w.name})</small></div></div>`; btn.onclick = () => openWalkModal(w); wContainer.appendChild(btn); }); }
+  function setSupplies(item) { db.ref(`supplies/${item}`).set(document.getElementById('check' + item).checked); }
+  function handleSupplyBanner(items) { const low = []; if(items.Food) low.push('FOOD'); if(items.Meds) low.push('MEDS'); if(items.Treats) low.push('TREATS'); const b = document.getElementById('supplyBanner'); if(b) { b.style.display = low.length > 0 ? 'block' : 'none'; b.innerHTML = low.length > 0 ? `⚠️ LOW ${low.join(' & ')} ⚠️` : ''; } ['Food','Meds','Treats'].forEach(s => { const el = document.getElementById('check'+s); if(el) el.checked = !!items[s]; }); }
+  function openHistoryModal() { document.getElementById('historyModal').style.display = 'flex'; loadHistory(7); }
   function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
-
   function loadHistory(daysCount) {
     const historyList = document.getElementById('historyList');
     const btnWeek = document.getElementById('btnWeek');
     const btnMonth = document.getElementById('btnMonth');
-    if(daysCount === 7) {
-      btnWeek.style.background = '#0277bd'; btnWeek.style.color = 'white';
-      btnMonth.style.background = 'transparent'; btnMonth.style.color = '#aaa';
-    } else {
-      btnMonth.style.background = '#0277bd'; btnMonth.style.color = 'white';
-      btnWeek.style.background = 'transparent'; btnWeek.style.color = '#aaa';
-    }
+    btnWeek.style.background = daysCount === 7 ? '#0277bd' : 'transparent';
+    btnMonth.style.background = daysCount === 30 ? '#0277bd' : 'transparent';
     historyList.innerHTML = '<p style="text-align:center; opacity:0.5;">Fetching records...</p>';
     db.ref('days').limitToLast(daysCount).once('value', snapshot => {
       const allDays = snapshot.val() || {};
       historyList.innerHTML = '';
       const sortedKeys = Object.keys(allDays).sort().reverse();
-      if (sortedKeys.length === 0) {
-        historyList.innerHTML = '<p style="text-align:center; color:#666;">No data found for this period.</p>';
-        return;
-      }
       sortedKeys.forEach(dateKey => {
         const dayData = allDays[dateKey];
         const daySection = document.createElement('div');
         daySection.style.cssText = "margin-bottom:12px; padding:12px; background:#252525; border-radius:15px; border-left:4px solid #4caf50;";
         const dateObj = new Date(dateKey + 'T00:00:00');
-        const isToday = dateKey === todayKey;
-        const dateDisplay = isToday ? "Today" : dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+        const dateDisplay = dateKey === todayKey ? "Today" : dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
         let routines = [];
-        ['Breakfast', 'Blinds', 'Dinner', 'Meds'].forEach(t => {
-          if(dayData[t]) {
-            const timeOnly = dayData[t].replace('✔ ', '');
-            routines.push(`<span style="display:inline-block; background:#1b5e20; padding:2px 8px; border-radius:8px; margin:2px; font-size:11px;">${t}: ${timeOnly}</span>`);
-          }
+        currentRoutines.forEach(r => {
+          if(dayData[r.name]) routines.push(`<span style="display:inline-block; background:#1b5e20; padding:2px 8px; border-radius:8px; margin:2px; font-size:11px;">${r.emoji} ${r.name}: ${dayData[r.name].replace('✔ ', '')}</span>`);
         });
         let walksArr = [];
         if (dayData.Walks) {
-          try {
-            JSON.parse(dayData.Walks).forEach(w => {
-              walksArr.push(`<div style="font-size:13px; margin-top:5px; color:#ddd;">${w.note} ${w.time} <span style="opacity:0.6">(${w.name})</span></div>`);
-            });
-          } catch(e) {}
+          try { JSON.parse(dayData.Walks).forEach(w => walksArr.push(`<div style="font-size:13px; margin-top:5px; color:#ddd;">${w.note} ${w.time} <span style="opacity:0.6">(${w.name})</span></div>`)); } catch(e) {}
         }
-        daySection.innerHTML = `
-          <div style="font-weight:800; color:#4fc3f7; font-size:14px; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">${dateDisplay}</div>
-          <div style="display:flex; flex-wrap:wrap; margin-bottom:8px;">${routines.join('') || '<span style="font-size:11px; opacity:0.4;">No routine tasks</span>'}</div>
-          <div style="border-top:1px solid #333; padding-top:5px;">${walksArr.join('') || '<span style="font-size:11px; opacity:0.4;">No walks</span>'}</div>
-        `;
+        daySection.innerHTML = `<div style="font-weight:800; color:#4fc3f7; font-size:14px; margin-bottom:8px;">${dateDisplay}</div><div>${routines.join('')}</div><div style="border-top:1px solid #333; margin-top:5px; padding-top:5px;">${walksArr.join('')}</div>`;
         historyList.appendChild(daySection);
       });
     });
