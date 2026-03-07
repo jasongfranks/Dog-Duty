@@ -17,40 +17,25 @@
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #121212; color: #fff; margin: 0; padding: 0; font-size: 16px; overflow-x: hidden; }
-    
     #supplyBanner { display: none; background: #b71c1c; color: white; padding: 14px; text-align: center; font-weight: 800; font-size: 16px; border-bottom: 3px solid #ff5252; text-transform: uppercase; }
-    main { padding: 12px; display: none; } /* Hidden until logged in */
-
+    main { padding: 12px; display: none; }
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #333; }
     .brand-area { display: flex; align-items: center; gap: 8px; }
     .brand-area img { height: 32px; width: auto; display: block; }
     h1 { margin: 0; font-size: 20px; white-space: nowrap; }
-    
     #syncStatus { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: #4fc3f7; opacity: 0; transition: opacity 0.3s; pointer-events: none; margin-left: 5px; }
     #syncStatus.visible { opacity: 1; }
-
     .header-controls { display: flex; gap: 8px; }
     .icon-btn { background: #333; padding: 8px 10px; border-radius: 20px; font-weight: bold; font-size: 14px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 4px; border: 1px solid transparent; transition: transform 0.1s; }
-    .icon-btn:active { transform: scale(0.9); }
-    
     .list-container { display: flex; flex-direction: column; gap: 12px; padding-bottom: 10px; }
     .section-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; margin: 15px 0 5px 5px; }
-    
     button.task-btn { width: 100%; text-align: left; font-size: 18px; padding: 20px; border-radius: 18px; border: none; background: #2c2c2c; color: #e0e0e0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.15s ease; position: relative; }
-    button.task-btn:active { transform: scale(0.96); }
     button.task-btn.done { background: #2e7d32; color: #fff; }
-    
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-    .is-saving { animation: pulse 1s infinite !important; pointer-events: none; }
-
-    .add-walk-btn { width: 100%; background: #0277bd; color: white; border: none; padding: 18px; border-radius: 18px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: transform 0.1s; }
-
+    .add-walk-btn { width: 100%; background: #0277bd; color: white; border: none; padding: 18px; border-radius: 18px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); }
     .modal-content { background: #1e1e1e; padding: 25px; border-radius: 24px; text-align: center; width: 92%; max-width: 400px; border: 1px solid #333; }
-    
-    .action-btn { display: block; width: 100%; padding: 16px; font-size: 18px; border-radius: 14px; border: none; background: #2e7d32; color: white; margin-bottom: 10px; cursor: pointer; transition: transform 0.1s; font-weight: bold; }
+    .action-btn { display: block; width: 100%; padding: 16px; font-size: 18px; border-radius: 14px; border: none; background: #2e7d32; color: white; margin-bottom: 10px; cursor: pointer; font-weight: bold; }
     .action-btn.secondary { background: #333; color: #ccc; }
-    
     .supply-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 10px; border-bottom: 1px solid #333; }
     .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
     .switch input { opacity: 0; width: 0; height: 0; }
@@ -58,7 +43,6 @@
     .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
     input:checked + .slider { background-color: #d32f2f; }
     input:checked + .slider:before { transform: translateX(26px); }
-
     input[type="time"] { width: 100%; padding: 15px; font-size: 28px; border-radius: 14px; border: 2px solid #444; background: #222; color: white; margin-bottom: 15px; text-align: center; }
   </style>
 </head>
@@ -70,10 +54,11 @@
   <div class="modal-content">
     <img src="https://dog-duty.netlify.app/logo.png" style="height:80px; margin-bottom:20px;">
     <h2>Family Access</h2>
-    <p style="color:#aaa; margin-bottom:20px;">Please sign in with your Google account to manage Dog Duty.</p>
-    <button class="action-btn" onclick="handleGoogleLogin()" style="background:#4285F4; display:flex; align-items:center; justify-content:center; gap:10px;">
+    <p style="color:#aaa; margin-bottom:20px;">Sign in with Google to manage Dog Duty.</p>
+    <button id="loginBtn" class="action-btn" onclick="handleGoogleLogin()" style="background:#4285F4; display:flex; align-items:center; justify-content:center; gap:10px; width:100%;">
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Sign in with Google
     </button>
+    <div id="authError" style="color:#ff5252; margin-top:15px; font-size:12px; display:none;"></div>
   </div>
 </div>
 
@@ -88,14 +73,11 @@
       <div class="icon-btn" onclick="confirmSignOut()">👤 <span id="userNameDisplay">...</span></div>
     </div>
   </header>
-
   <div class="section-label">Routine</div>
   <div id="routineButtons" class="list-container"></div>
-
   <div class="section-label">Walks</div>
   <div id="walkList" class="list-container"></div>
   <button class="add-walk-btn" onclick="openWalkModal()">＋ Add Walk</button>
-
   <div style="margin-top:30px; border-top: 1px solid #333; padding-top:20px;">
     <button class="action-btn secondary" onclick="openSupplyModal()">📦 Manage Supplies</button>
   </div>
@@ -158,17 +140,26 @@
   let activeRequests = 0;
   const todayKey = new Date().toISOString().split('T')[0];
 
-  // 2. AUTH LOGIC
+  // 2. AUTH WATCHER
   auth.onAuthStateChanged(user => {
     if (user) {
-      if (APPROVED_EMAILS.includes(user.email.toLowerCase())) {
-        userFirstName = user.displayName.split(' ')[0];
+      const email = user.email.toLowerCase();
+      // Normalized matching (ignores dots for gmail check)
+      const normalizedEmail = email.replace(/\.(?=[^@]*@gmail\.com)/g, "");
+      const isApproved = APPROVED_EMAILS.some(e => {
+        const approvedNormalized = e.toLowerCase().replace(/\.(?=[^@]*@gmail\.com)/g, "");
+        return approvedNormalized === normalizedEmail;
+      });
+
+      if (isApproved) {
+        userFirstName = user.displayName ? user.displayName.split(' ')[0] : "User";
         document.getElementById('loginModal').style.display = 'none';
         document.getElementById('appContent').style.display = 'block';
         document.getElementById('userNameDisplay').textContent = userFirstName;
         init();
       } else {
-        alert("Access Denied: " + user.email + " is not on the family list.");
+        document.getElementById('authError').textContent = "Access Denied: " + email;
+        document.getElementById('authError').style.display = 'block';
         auth.signOut();
       }
     } else {
@@ -178,14 +169,18 @@
   });
 
   function handleGoogleLogin() {
-    auth.signInWithRedirect(provider);
+    // Switch to Popup to prevent the redirect loop
+    auth.signInWithPopup(provider).catch(err => {
+      document.getElementById('authError').textContent = err.message;
+      document.getElementById('authError').style.display = 'block';
+    });
   }
 
   function confirmSignOut() {
-    if(confirm("Sign out of Dog Duty?")) auth.signOut();
+    if(confirm("Sign out?")) auth.signOut().then(() => window.location.reload());
   }
 
-  // 3. DATABASE LOGIC
+  // 3. APP LOGIC
   function setSyncUI(isSyncing) {
     const bar = document.getElementById('syncStatus');
     if (isSyncing) { activeRequests++; bar.classList.add('visible'); } 
@@ -208,7 +203,6 @@
     rContainer.innerHTML = '';
     const tasks = ['Breakfast', 'Blinds', 'Dinner', 'Meds'];
     const emojis = {'Breakfast':'🥣','Dinner':'🍽️','Blinds':'🪟','Meds':'💊'};
-
     tasks.forEach(t => {
       const val = data[t];
       const btn = document.createElement('button');
@@ -249,17 +243,13 @@
     const finalTime = `${((h % 12) || 12)}:${m} ${h >= 12 ? 'PM' : 'AM'}`;
     const emojiMap = {'pee':'💦','poop':'💩','both':'💦💩','backyard':'🏡❓'};
     const emoji = subAction ? emojiMap[subAction] : null;
-
     let newWalks = [...activeWalks];
     if(editingWalkId) {
       newWalks = newWalks.map(w => w.id == editingWalkId ? {...w, time: finalTime, note: emoji || w.note} : w);
     } else {
       newWalks.push({ id: Date.now(), time: finalTime, name: userFirstName, note: emoji || '🚶' });
     }
-    db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(newWalks)).then(() => {
-      setSyncUI(false);
-      closeWalkModal();
-    });
+    db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(newWalks)).then(() => { setSyncUI(false); closeWalkModal(); });
   }
 
   function confirmDeleteWalk() {
@@ -280,25 +270,27 @@
 
   function handleSupplyBanner(items) {
     const low = [];
-    if(items.Food) low.push('FOOD');
-    if(items.Meds) low.push('MEDS');
-    if(items.Treats) low.push('TREATS');
+    if(items && items.Food) low.push('FOOD');
+    if(items && items.Meds) low.push('MEDS');
+    if(items && items.Treats) low.push('TREATS');
     const b = document.getElementById('supplyBanner');
     b.style.display = low.length > 0 ? 'block' : 'none';
     b.innerHTML = low.length > 0 ? `⚠️ LOW ${low.join(' & ')} ⚠️` : '';
     if(document.getElementById('checkFood')) {
-      document.getElementById('checkFood').checked = !!items.Food;
-      document.getElementById('checkMeds').checked = !!items.Meds;
-      document.getElementById('checkTreats').checked = !!items.Treats;
+      document.getElementById('checkFood').checked = !!(items && items.Food);
+      document.getElementById('checkMeds').checked = !!(items && items.Meds);
+      document.getElementById('checkTreats').checked = !!(items && items.Treats);
     }
   }
 
   function getTimeBasedEmoji(timeStr) {
-    const hours = parseInt(timeStr.split(':')[0]) + (timeStr.includes('PM') && !timeStr.startsWith('12') ? 12 : 0);
-    if (hours >= 5 && hours < 11) return '🌅';
-    if (hours >= 11 && hours < 16) return '☀️';
-    if (hours >= 16 && hours < 20) return '🌇';
-    return '🌙';
+    try {
+      const hours = parseInt(timeStr.split(':')[0]) + (timeStr.includes('PM') && !timeStr.startsWith('12') ? 12 : 0);
+      if (hours >= 5 && hours < 11) return '🌅';
+      if (hours >= 11 && hours < 16) return '☀️';
+      if (hours >= 16 && hours < 20) return '🌇';
+      return '🌙';
+    } catch(e) { return '🚶'; }
   }
 
   function openWalkModal(w = null) {
@@ -325,7 +317,6 @@
   function closeWalkModal() { document.getElementById('walkModal').style.display = 'none'; editingWalkId = null; }
   function openSupplyModal() { document.getElementById('supplyModal').style.display = 'flex'; }
   function closeSupplyModal() { document.getElementById('supplyModal').style.display = 'none'; }
-  function openInitialsModal() { /* Deprecated */ }
 </script>
 </body>
 </html>
