@@ -7,6 +7,7 @@
   
   <link rel="icon" type="image/png" href="dogdutyicon.png">
   <link rel="apple-touch-icon" href="dogdutyicon.png">
+  
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Dog Duty">
@@ -22,8 +23,11 @@
     #supplyBanner { display: none; background: #b71c1c; color: white; padding: 14px; text-align: center; font-weight: 800; font-size: 16px; border-bottom: 3px solid #ff5252; text-transform: uppercase; }
     main { padding: 12px; display: none; }
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #333; }
+    
     .brand-area { display: flex; align-items: center; gap: 8px; }
-    .brand-area img { height: 32px; width: 32px; border-radius: 6px; }
+    /* Prevent header logo squashing */
+    .brand-area img { height: 32px; width: 32px; min-width: 32px; border-radius: 6px; object-fit: cover; }
+    
     h1 { margin: 0; font-size: 20px; white-space: nowrap; }
     #syncStatus { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #4fc3f7; opacity: 0; transition: opacity 0.3s; }
     #syncStatus.visible { opacity: 1; }
@@ -50,19 +54,19 @@
     }
     button.task-btn.done { background: #2e7d32; color: #fff; }
 
-    /* UPDATED WALK LAYOUT */
     .walk-content {
       display: grid;
-      grid-template-columns: auto 1fr auto; /* Fits label, fills center, fits stamp */
+      grid-template-columns: auto 1fr auto; 
       align-items: center;
       width: 100%;
       gap: 12px;
     }
+    /* Matched weight to routine task buttons */
     .walk-left { 
       text-align: left; 
       font-size: 18px; 
       white-space: nowrap; 
-      font-weight: bold;
+      font-weight: normal; 
     }
     .walk-center { 
       text-align: left; 
@@ -288,7 +292,6 @@
       
       const timeOfDayEmoji = getTimeEmoji(w.time);
       
-      // GRID LAYOUT: Left (Emoji Walk), Center (Note/Action), Right (Stamp)
       btn.innerHTML = `
         <div class="walk-content">
           <div class="walk-left">${timeOfDayEmoji} Walk</div>
