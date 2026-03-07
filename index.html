@@ -4,8 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Dog Duty</title>
+  
   <link rel="icon" type="image/png" href="DogDutyIcon.png">
   <link rel="apple-touch-icon" href="DogDutyIcon.png">
+  
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -53,7 +55,7 @@
   <div class="modal-content">
     <img src="https://dog-duty.netlify.app/logo.png" style="height:80px; margin-bottom:20px;">
     <h2>Family Access</h2>
-    <p id="authPrompt" style="color:#aaa; margin-bottom:20px;">Sign in to manage Dog Duty.</p>
+    <p style="color:#aaa; margin-bottom:20px;">Sign in with Google to manage Dog Duty.</p>
     <button id="loginBtn" class="action-btn" onclick="handleGoogleLogin()" style="background:#4285F4; display:flex; align-items:center; justify-content:center; gap:10px; width:100%;">
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Sign in with Google
     </button>
@@ -109,7 +111,6 @@
 </div>
 
 <script>
-  // 1. CONFIG
   const firebaseConfig = {
   apiKey: "AIzaSyBaIQVgPLcCj4T8-wvZ90L9iKSJHZ_7Srg",
   authDomain: "dog-duty-fe307.firebaseapp.com",
@@ -120,25 +121,28 @@
   appId: "1:864273780235:web:42c82e06afa5deadc1c10e",
   measurementId: "G-C460E5SS3D"
 };
-
   const APPROVED_EMAILS = [
     "jason.g.franks@gmail.com",
-    "jaime.l.franks@gmail.com",
-	"garrett.j.franks@gmail.com",
-	"genevieve.j.franks@gmail.com"
+	"jaime.l.franks@gmail.com,
+	"garrett.j.franks@gmail.com,
+	"genevieve.j.franks@gmail.com
   ];
 
+  // Helper to show errors
   function showError(msg) {
     const errDiv = document.getElementById('authError');
-    errDiv.textContent = msg;
-    errDiv.style.display = 'block';
+    if (errDiv) {
+      errDiv.textContent = msg;
+      errDiv.style.display = 'block';
+    }
     console.error(msg);
   }
 
+  // Initializing Firebase
   try {
     firebase.initializeApp(firebaseConfig);
   } catch (e) {
-    showError("Firebase Init Error: " + e.message);
+    showError("Init Error: " + e.message);
   }
 
   const db = firebase.database();
@@ -155,7 +159,7 @@
   auth.onAuthStateChanged(user => {
     if (user) {
       const email = user.email.toLowerCase();
-      // Gmail dot normalization
+      // Ignore dots in Gmail
       const normalizedEmail = email.replace(/\.(?=[^@]*@gmail\.com)/g, "");
       const isApproved = APPROVED_EMAILS.some(e => {
         const approvedNormalized = e.toLowerCase().replace(/\.(?=[^@]*@gmail\.com)/g, "");
@@ -163,27 +167,29 @@
       });
 
       if (isApproved) {
-        userFirstName = user.displayName ? user.displayName.split(' ')[0] : "Jason";
+        userFirstName = user.displayName ? user.displayName.split(' ')[0] : "User";
         document.getElementById('loginModal').style.display = 'none';
         document.getElementById('appContent').style.display = 'block';
         document.getElementById('userNameDisplay').textContent = userFirstName;
         init();
       } else {
-        showError("Access Denied: " + email + " is not on the family list.");
+        showError("Access Denied: " + email);
         auth.signOut();
       }
     } else {
       document.getElementById('loginModal').style.display = 'flex';
       document.getElementById('appContent').style.display = 'none';
     }
-  }, (error) => {
-    showError("Auth State Error: " + error.message);
-  });
+  }, (err) => showError("Auth State Error: " + err.message));
 
   function handleGoogleLogin() {
-    document.getElementById('authError').style.display = 'none';
+    // Popup is better for debugging logic flow
     auth.signInWithPopup(provider).catch(err => {
-      showError("Login Failed: " + err.message);
+      showError("Login Failed: " + err.code + " - " + err.message);
+      // If popup fails on mobile, try redirect as fallback
+      if (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request') {
+        auth.signInWithRedirect(provider);
+      }
     });
   }
 
@@ -191,9 +197,10 @@
     if(confirm("Sign out?")) auth.signOut().then(() => window.location.reload());
   }
 
-  // 3. CORE APP LOGIC
+  // 3. CORE LOGIC
   function setSyncUI(isSyncing) {
     const bar = document.getElementById('syncStatus');
+    if (!bar) return;
     if (isSyncing) { activeRequests++; bar.classList.add('visible'); } 
     else { activeRequests = Math.max(0, activeRequests - 1); if (activeRequests === 0) bar.classList.remove('visible'); }
   }
@@ -203,9 +210,8 @@
       const data = snapshot.val() || {};
       renderRoutine(data);
       renderWalks(data.Walks);
-    }, (error) => {
-      showError("Database Read Error: " + error.message);
-    });
+    }, (err) => showError("DB Error: " + err.message));
+
     db.ref('supplies').on('value', snapshot => {
       handleSupplyBanner(snapshot.val() || {});
     });
@@ -213,6 +219,7 @@
 
   function renderRoutine(data) {
     const rContainer = document.getElementById('routineButtons');
+    if (!rContainer) return;
     rContainer.innerHTML = '';
     const tasks = ['Breakfast', 'Blinds', 'Dinner', 'Meds'];
     const emojis = {'Breakfast':'🥣','Dinner':'🍽️','Blinds':'🪟','Meds':'💊'};
@@ -225,7 +232,7 @@
         setSyncUI(true);
         const timeStr = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         const newVal = val ? null : `✔ ${timeStr} (${userFirstName})`;
-        db.ref(`days/${todayKey}/${t}`).set(newVal).then(() => setSyncUI(false)).catch(e => showError("Save Error: " + e.message));
+        db.ref(`days/${todayKey}/${t}`).set(newVal).then(() => setSyncUI(false)).catch(e => showError(e.message));
       };
       rContainer.appendChild(btn);
     });
@@ -233,7 +240,112 @@
 
   function renderWalks(walksJson) {
     const wContainer = document.getElementById('walkList');
+    if (!wContainer) return;
     wContainer.innerHTML = '';
-    activeWalks = walksJson ? JSON.parse(walksJson) : [];
+    try {
+      activeWalks = walksJson ? JSON.parse(walksJson) : [];
+    } catch(e) { activeWalks = []; }
+    
     if(activeWalks.length === 0) {
-      wContainer.innerHTML = '<div style="text-align:center; padding:1
+      wContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#555;">No walks today</div>';
+      return;
+    }
+    activeWalks.forEach(w => {
+      const btn = document.createElement('button');
+      btn.id = 'walk-' + w.id;
+      btn.className = `task-btn done`;
+      btn.innerHTML = `<span>${getTimeBasedEmoji(w.time)} Walk (${w.time})</span><small style="opacity:0.8">${w.note} by ${w.name}</small>`;
+      btn.onclick = () => openWalkModal(w);
+      wContainer.appendChild(btn);
+    });
+  }
+
+  function saveWalk(subAction) {
+    setSyncUI(true);
+    const timeEl = document.getElementById('walkTimeInput');
+    const rawTime = timeEl ? timeEl.value : "12:00";
+    const [h, m] = rawTime.split(':');
+    const finalTime = `${((h % 12) || 12)}:${m} ${h >= 12 ? 'PM' : 'AM'}`;
+    const emojiMap = {'pee':'💦','poop':'💩','both':'💦💩','backyard':'🏡❓'};
+    const emoji = subAction ? emojiMap[subAction] : null;
+
+    let newWalks = [...activeWalks];
+    if(editingWalkId) {
+      newWalks = newWalks.map(w => w.id == editingWalkId ? {...w, time: finalTime, note: emoji || w.note} : w);
+    } else {
+      newWalks.push({ id: Date.now(), time: finalTime, name: userFirstName, note: emoji || '🚶' });
+    }
+    db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(newWalks)).then(() => { setSyncUI(false); closeWalkModal(); }).catch(e => showError(e.message));
+  }
+
+  function confirmDeleteWalk() {
+    if (confirm("Delete walk?")) {
+      const idToDelete = editingWalkId;
+      const el = document.getElementById('walk-' + idToDelete);
+      if (el) el.remove();
+      setSyncUI(true);
+      const filtered = activeWalks.filter(w => w.id != idToDelete);
+      db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(filtered)).then(() => { setSyncUI(false); closeWalkModal(); });
+    }
+  }
+
+  function setSupplies(item) {
+    setSyncUI(true);
+    const isChecked = document.getElementById('check' + item).checked;
+    db.ref(`supplies/${item}`).set(isChecked).then(() => setSyncUI(false));
+  }
+
+  function handleSupplyBanner(items) {
+    const low = [];
+    if(items && items.Food) low.push('FOOD');
+    if(items && items.Meds) low.push('MEDS');
+    if(items && items.Treats) low.push('TREATS');
+    const b = document.getElementById('supplyBanner');
+    if (b) {
+        b.style.display = low.length > 0 ? 'block' : 'none';
+        b.innerHTML = low.length > 0 ? `⚠️ LOW ${low.join(' & ')} ⚠️` : '';
+    }
+    if(document.getElementById('checkFood')) {
+      document.getElementById('checkFood').checked = !!(items && items.Food);
+      document.getElementById('checkMeds').checked = !!(items && items.Meds);
+      document.getElementById('checkTreats').checked = !!(items && items.Treats);
+    }
+  }
+
+  function getTimeBasedEmoji(timeStr) {
+    try {
+      const hours = parseInt(timeStr.split(':')[0]) + (timeStr.includes('PM') && !timeStr.startsWith('12') ? 12 : 0);
+      if (hours >= 5 && hours < 11) return '🌅';
+      if (hours >= 11 && hours < 16) return '☀️';
+      if (hours >= 16 && hours < 20) return '🌇';
+      return '🌙';
+    } catch(e) { return '🚶'; }
+  }
+
+  function openWalkModal(w = null) {
+    const timeInput = document.getElementById('walkTimeInput');
+    if(w) {
+      editingWalkId = w.id;
+      document.getElementById('walkModalTitle').textContent = "Edit Walk";
+      document.getElementById('editSaveArea').style.display = 'block';
+      document.getElementById('editWalkControls').style.display = 'block';
+      const [t, m] = w.time.split(' '); let [h, min] = t.split(':');
+      if (m === 'PM' && h !== '12') h = parseInt(h) + 12;
+      if (m === 'AM' && h === '12') h = '00';
+      timeInput.value = `${h.toString().padStart(2,'0')}:${min}`;
+    } else {
+      editingWalkId = null;
+      document.getElementById('walkModalTitle').textContent = "Log Walk";
+      document.getElementById('editSaveArea').style.display = 'none';
+      document.getElementById('editWalkControls').style.display = 'none';
+      const now = new Date(); timeInput.value = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+    }
+    document.getElementById('walkModal').style.display = 'flex';
+  }
+
+  function closeWalkModal() { document.getElementById('walkModal').style.display = 'none'; editingWalkId = null; }
+  function openSupplyModal() { document.getElementById('supplyModal').style.display = 'flex'; }
+  function closeSupplyModal() { document.getElementById('supplyModal').style.display = 'none'; }
+</script>
+</body>
+</html>
