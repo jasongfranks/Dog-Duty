@@ -15,7 +15,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
 
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -36,6 +35,12 @@
     
     button.task-btn { width: 100%; text-align: left; font-size: 18px; padding: 20px; border-radius: 18px; border: none; background: #2c2c2c; color: #e0e0e0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.15s ease; }
     button.task-btn.done { background: #2e7d32; color: #fff; }
+
+    /* Fix for Walk Button Internal Layout */
+    .walk-content { display: grid; grid-template-columns: auto 1fr auto; align-items: center; width: 100%; gap: 12px; }
+    .walk-left { text-align: left; font-size: 18px; white-space: nowrap; }
+    .walk-center { text-align: left; font-size: 24px; }
+    .walk-right { text-align: right; line-height: 1.2; }
 
     .add-walk-btn { width: 100%; background: #0277bd; color: white; border: none; padding: 18px; border-radius: 18px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); }
@@ -90,7 +95,7 @@
     <button class="action-btn secondary" style="background:#455a64; margin-top:10px;" onclick="openHistoryModal()">📅 View History</button>
   </div>
 
-  <div class="version-label" onclick="window.location.reload(true)">Version 1.1.1</div>
+  <div class="version-label" onclick="window.location.reload(true)">Version 1.1.2</div>
 </main>
 
 <div id="loginModal" class="modal" style="display:flex;">
@@ -108,22 +113,56 @@
   <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
     <h2>Manage Routines</h2>
     <div id="routineSettingsList" style="text-align:left; margin-bottom:20px;"></div>
-    
     <div style="border-top: 1px solid #333; padding-top: 15px;">
-      <input type="text" id="newRoutineName" placeholder="Task Name (e.g. Brush Teeth)" style="width:100%; padding:15px; border-radius:10px; border:none; background:#333; color:white;">
-      
-      <div class="emoji-picker" id="emojiPicker">
-        </div>
-
+      <input type="text" id="newRoutineName" placeholder="Task Name" style="width:100%; padding:15px; border-radius:10px; border:none; background:#333; color:white;">
+      <div class="emoji-picker" id="emojiPicker"></div>
       <button class="action-btn" onclick="addRoutine()">＋ Add New Task</button>
       <button class="action-btn secondary" onclick="closeManageRoutineModal()">Close</button>
     </div>
   </div>
 </div>
 
-<div id="walkModal" class="modal"><div class="modal-content"><h2 id="walkModalTitle">Log Walk</h2><input type="time" id="walkTimeInput"><div id="editSaveArea" style="display:none; margin-bottom:15px;"><button class="action-btn" style="background:#0277bd;" onclick="saveWalk(null)">💾 Save Time Change</button></div><div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;"><button class="action-btn" onclick="saveWalk('pee')">💦 Pee</button><button class="action-btn" onclick="saveWalk('poop')">💩 Poop</button><button class="action-btn" style="grid-column: span 2;" onclick="saveWalk('both')">💦💩 Both</button><button class="action-btn secondary" style="grid-column: span 2; background:#5d4037; color:white;" onclick="saveWalk('backyard')">🏡 Backyard</button></div><div id="editWalkControls" style="display:none; border-top:1px solid #333; padding-top:10px; margin-top:10px;"><button class="action-btn" style="background:#b71c1c;" onclick="confirmDeleteWalk()">🗑️ Delete Walk</button></div><button class="action-btn secondary" style="margin-top:10px;" onclick="closeWalkModal()">Cancel</button></div></div>
-<div id="supplyModal" class="modal"><div class="modal-content"><h2>Supplies</h2><div class="supply-row"><span>🥫 Food</span><label class="switch"><input type="checkbox" id="checkFood" onchange="setSupplies('Food')"><span class="slider"></span></label></div><div class="supply-row"><span>💊 Meds</span><label class="switch"><input type="checkbox" id="checkMeds" onchange="setSupplies('Meds')"><span class="slider"></span></label></div><div class="supply-row"><span>🦴 Treats</span><label class="switch"><input type="checkbox" id="checkTreats" onchange="setSupplies('Treats')"><span class="slider"></span></label></div><button class="action-btn secondary" style="margin-top:20px;" onclick="closeSupplyModal()">Close</button></div></div>
-<div id="historyModal" class="modal"><div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column;"><h2 style="margin-top: 0;">Activity History</h2><div style="display: flex; background: #333; border-radius: 12px; padding: 4px; margin-bottom: 15px;"><button id="btnWeek" onclick="loadHistory(7)" style="flex:1; border:none; background:#0277bd; color:white; padding:8px; border-radius:10px; font-weight:bold; cursor:pointer;">Last 7 Days</button><button id="btnMonth" onclick="loadHistory(30)" style="flex:1; border:none; background:transparent; color:#aaa; padding:8px; border-radius:10px; font-weight:bold; cursor:pointer;">Last 30 Days</button></div><div id="historyList" style="text-align: left; overflow-y: auto; flex-grow: 1; padding-right: 5px;"></div><button class="action-btn secondary" style="margin-top: 15px;" onclick="closeHistoryModal()">Close</button></div></div>
+<div id="walkModal" class="modal">
+  <div class="modal-content">
+    <h2 id="walkModalTitle">Log Walk</h2>
+    <input type="time" id="walkTimeInput" style="width:100%; padding:15px; font-size:28px; border-radius:14px; border:2px solid #444; background:#222; color:white; text-align:center; margin-bottom:15px;">
+    <div id="editSaveArea" style="display:none; margin-bottom:15px;">
+      <button class="action-btn" style="background:#0277bd;" onclick="saveWalk(null)">💾 Save Time Change</button>
+    </div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+      <button class="action-btn" onclick="saveWalk('pee')">💦 Pee</button>
+      <button class="action-btn" onclick="saveWalk('poop')">💩 Poop</button>
+      <button class="action-btn" style="grid-column: span 2;" onclick="saveWalk('both')">💦💩 Both</button>
+      <button class="action-btn secondary" style="grid-column: span 2; background:#5d4037; color:white;" onclick="saveWalk('backyard')">🏡 Backyard</button>
+    </div>
+    <div id="editWalkControls" style="display:none; border-top:1px solid #333; padding-top:10px; margin-top:10px;">
+      <button class="action-btn" style="background:#b71c1c;" onclick="confirmDeleteWalk()">🗑️ Delete Walk</button>
+    </div>
+    <button class="action-btn secondary" style="margin-top:10px;" onclick="closeWalkModal()">Cancel</button>
+  </div>
+</div>
+
+<div id="supplyModal" class="modal">
+  <div class="modal-content">
+    <h2>Supplies</h2>
+    <div class="supply-row"><span>🥫 Food</span><label class="switch"><input type="checkbox" id="checkFood" onchange="setSupplies('Food')"><span class="slider"></span></label></div>
+    <div class="supply-row"><span>💊 Meds</span><label class="switch"><input type="checkbox" id="checkMeds" onchange="setSupplies('Meds')"><span class="slider"></span></label></div>
+    <div class="supply-row"><span>🦴 Treats</span><label class="switch"><input type="checkbox" id="checkTreats" onchange="setSupplies('Treats')"><span class="slider"></span></label></div>
+    <button class="action-btn secondary" style="margin-top:20px;" onclick="closeSupplyModal()">Close</button>
+  </div>
+</div>
+
+<div id="historyModal" class="modal">
+  <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column;">
+    <h2 style="margin-top: 0;">Activity History</h2>
+    <div style="display: flex; background: #333; border-radius: 12px; padding: 4px; margin-bottom: 15px;">
+      <button id="btnWeek" onclick="loadHistory(7)" style="flex:1; border:none; background:#0277bd; color:white; padding:8px; border-radius:10px; font-weight:bold; cursor:pointer;">Last 7 Days</button>
+      <button id="btnMonth" onclick="loadHistory(30)" style="flex:1; border:none; background:transparent; color:#aaa; padding:8px; border-radius:10px; font-weight:bold; cursor:pointer;">Last 30 Days</button>
+    </div>
+    <div id="historyList" style="text-align: left; overflow-y: auto; flex-grow: 1; padding-right: 5px;"></div>
+    <button class="action-btn secondary" style="margin-top: 15px;" onclick="closeHistoryModal()">Close</button>
+  </div>
+</div>
 
 <script>
   const firebaseConfig = {
@@ -147,8 +186,9 @@
 
   let userFirstName = "";
   let activeWalks = [];
-  let currentRoutines = []; // Now stores objects: {name, emoji}
+  let currentRoutines = [];
   let selectedEmoji = PRESET_EMOJIS[0];
+  let editingWalkId = null;
   const todayKey = new Date().toISOString().split('T')[0];
 
   auth.onAuthStateChanged(user => {
@@ -161,24 +201,24 @@
         document.getElementById('userNameDisplay').textContent = userFirstName;
         init();
       } else { auth.signOut(); }
-    } else { document.getElementById('loginModal').style.display = 'flex'; document.getElementById('appContent').style.display = 'none'; }
+    } else { 
+      document.getElementById('loginModal').style.display = 'flex'; 
+      document.getElementById('appContent').style.display = 'none'; 
+    }
   });
 
   function init() {
     db.ref('settings/routines').on('value', snap => {
       const data = snap.val();
-      // Backwards compatibility: convert old string arrays to objects if needed
       if (Array.isArray(data) && typeof data[0] === 'string') {
         currentRoutines = data.map(name => ({name, emoji: '✅'}));
       } else {
-        currentRoutines = data || [
-          {name: 'Breakfast', emoji: '🥣'}, {name: 'Blinds', emoji: '🪟'}, 
-          {name: 'Dinner', emoji: '🍽️'}, {name: 'Meds', emoji: '💊'}
-        ];
+        currentRoutines = data || [{name: 'Breakfast', emoji: '🥣'}, {name: 'Blinds', emoji: '🪟'}, {name: 'Dinner', emoji: '🍽️'}, {name: 'Meds', emoji: '💊'}];
       }
       db.ref(`days/${todayKey}`).on('value', snapshot => {
-        renderRoutine(snapshot.val() || {});
-        renderWalks((snapshot.val() || {}).Walks);
+        const val = snapshot.val() || {};
+        renderRoutine(val);
+        renderWalks(val.Walks);
       });
     });
     db.ref('supplies').on('value', snapshot => handleSupplyBanner(snapshot.val() || {}));
@@ -203,6 +243,42 @@
     });
   }
 
+  function getTimeEmoji(timeStr) {
+    try {
+      const [time, period] = timeStr.split(' ');
+      let [hour] = time.split(':').map(Number);
+      if (period === 'PM' && hour !== 12) hour += 12;
+      if (period === 'AM' && hour === 12) hour = 0;
+      if (hour >= 5 && hour < 11) return '🌅';
+      if (hour >= 11 && hour < 17) return '☀️';
+      if (hour >= 17 && hour < 20) return '🌇';
+      return '🌙';
+    } catch(e) { return '🚶'; }
+  }
+
+  function renderWalks(walksJson) {
+    const wContainer = document.getElementById('walkList');
+    wContainer.innerHTML = '';
+    try { activeWalks = walksJson ? JSON.parse(walksJson) : []; } catch(e) { activeWalks = []; }
+    if(activeWalks.length === 0) {
+      wContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#555;">No walks today</div>';
+      return;
+    }
+    activeWalks.forEach(w => {
+      const btn = document.createElement('button');
+      btn.className = `task-btn done`;
+      btn.innerHTML = `
+        <div class="walk-content">
+          <div class="walk-left">${getTimeEmoji(w.time)} Walk</div>
+          <div class="walk-center">${w.note}</div>
+          <div class="walk-right"><small style="opacity:0.7">✔ ${w.time}<br>(${w.name})</small></div>
+        </div>
+      `;
+      btn.onclick = () => openWalkModal(w);
+      wContainer.appendChild(btn);
+    });
+  }
+
   function setupEmojiPicker() {
     const picker = document.getElementById('emojiPicker');
     picker.innerHTML = '';
@@ -210,12 +286,44 @@
       const span = document.createElement('span');
       span.className = `emoji-option ${e === selectedEmoji ? 'selected' : ''}`;
       span.textContent = e;
-      span.onclick = () => {
-        selectedEmoji = e;
-        setupEmojiPicker();
-      };
+      span.onclick = () => { selectedEmoji = e; setupEmojiPicker(); };
       picker.appendChild(span);
     });
+  }
+
+  function saveWalk(subAction) {
+    setSyncUI(true);
+    const rawTime = document.getElementById('walkTimeInput').value;
+    const [h, m] = rawTime.split(':');
+    const finalTime = `${((h % 12) || 12)}:${m} ${h >= 12 ? 'PM' : 'AM'}`;
+    const emojiMap = {'pee':'💦','poop':'💩','both':'💦💩','backyard':'🏡'};
+    const emoji = subAction ? emojiMap[subAction] : (editingWalkId ? activeWalks.find(x => x.id === editingWalkId).note : '🚶');
+    let newWalks = [...activeWalks];
+    if(editingWalkId) newWalks = newWalks.map(w => w.id == editingWalkId ? {...w, time: finalTime, note: emoji} : w);
+    else newWalks.push({ id: Date.now(), time: finalTime, name: userFirstName, note: emoji });
+    db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(newWalks)).then(() => { setSyncUI(false); closeWalkModal(); });
+  }
+
+  function confirmDeleteWalk() {
+    if (confirm("Delete walk?")) {
+      const filtered = activeWalks.filter(w => w.id != editingWalkId);
+      db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(filtered)).then(() => closeWalkModal());
+    }
+  }
+
+  function openWalkModal(w = null) {
+    editingWalkId = w ? w.id : null;
+    if (w) {
+      const [t, m] = w.time.split(' '); let [h, min] = t.split(':');
+      if (m === 'PM' && h !== '12') h = parseInt(h) + 12; if (m === 'AM' && h === '12') h = '00';
+      document.getElementById('walkTimeInput').value = `${h.toString().padStart(2,'0')}:${min}`;
+    } else {
+      const now = new Date(); document.getElementById('walkTimeInput').value = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+    }
+    document.getElementById('walkModal').style.display = 'flex';
+    document.getElementById('editSaveArea').style.display = w ? 'block' : 'none';
+    document.getElementById('editWalkControls').style.display = w ? 'block' : 'none';
+    document.getElementById('walkModalTitle').textContent = w ? "Edit Walk" : "Log Walk";
   }
 
   function openManageRoutineModal() {
@@ -248,22 +356,6 @@
     }
   }
 
-  // Standard Support Functions
-  function closeManageRoutineModal() { document.getElementById('manageRoutineModal').style.display = 'none'; }
-  function handleGoogleLogin() { auth.signInWithPopup(provider); }
-  function confirmSignOut() { if(confirm("Sign out?")) auth.signOut().then(() => window.location.reload()); }
-  function setSyncUI(isSyncing) { const bar = document.getElementById('syncStatus'); if(isSyncing) bar.classList.add('visible'); else bar.classList.remove('visible'); }
-  function openSupplyModal() { document.getElementById('supplyModal').style.display = 'flex'; }
-  function closeSupplyModal() { document.getElementById('supplyModal').style.display = 'none'; }
-  function openWalkModal(w = null) { editingWalkId = w ? w.id : null; if (w) { const [t, m] = w.time.split(' '); let [h, min] = t.split(':'); if (m === 'PM' && h !== '12') h = parseInt(h) + 12; if (m === 'AM' && h === '12') h = '00'; document.getElementById('walkTimeInput').value = `${h.toString().padStart(2,'0')}:${min}`; } else { const now = new Date(); document.getElementById('walkTimeInput').value = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0'); } document.getElementById('walkModal').style.display = 'flex'; document.getElementById('editSaveArea').style.display = w ? 'block' : 'none'; document.getElementById('editWalkControls').style.display = w ? 'block' : 'none'; document.getElementById('walkModalTitle').textContent = w ? "Edit Walk" : "Log Walk"; }
-  function closeWalkModal() { document.getElementById('walkModal').style.display = 'none'; }
-  function saveWalk(subAction) { setSyncUI(true); const rawTime = document.getElementById('walkTimeInput').value; const [h, m] = rawTime.split(':'); const finalTime = `${((h % 12) || 12)}:${m} ${h >= 12 ? 'PM' : 'AM'}`; const emojiMap = {'pee':'💦','poop':'💩','both':'💦💩','backyard':'🏡'}; const emoji = subAction ? emojiMap[subAction] : (editingWalkId ? activeWalks.find(x => x.id === editingWalkId).note : '🚶'); let newWalks = [...activeWalks]; if(editingWalkId) newWalks = newWalks.map(w => w.id == editingWalkId ? {...w, time: finalTime, note: emoji} : w); else newWalks.push({ id: Date.now(), time: finalTime, name: userFirstName, note: emoji }); db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(newWalks)).then(() => { setSyncUI(false); closeWalkModal(); }); }
-  function confirmDeleteWalk() { if (confirm("Delete walk?")) { const filtered = activeWalks.filter(w => w.id != editingWalkId); db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(filtered)).then(() => closeWalkModal()); } }
-  function renderWalks(walksJson) { const wContainer = document.getElementById('walkList'); wContainer.innerHTML = ''; try { activeWalks = walksJson ? JSON.parse(walksJson) : []; } catch(e) { activeWalks = []; } if(activeWalks.length === 0) { wContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#555;">No walks today</div>'; return; } activeWalks.forEach(w => { const btn = document.createElement('button'); btn.className = `task-btn done`; btn.innerHTML = `<div class="walk-content"><div class="walk-left">🚶 Walk</div><div class="walk-center">${w.note}</div><div class="walk-right"><small style="opacity:0.7">✔ ${w.time} (${w.name})</small></div></div>`; btn.onclick = () => openWalkModal(w); wContainer.appendChild(btn); }); }
-  function setSupplies(item) { db.ref(`supplies/${item}`).set(document.getElementById('check' + item).checked); }
-  function handleSupplyBanner(items) { const low = []; if(items.Food) low.push('FOOD'); if(items.Meds) low.push('MEDS'); if(items.Treats) low.push('TREATS'); const b = document.getElementById('supplyBanner'); if(b) { b.style.display = low.length > 0 ? 'block' : 'none'; b.innerHTML = low.length > 0 ? `⚠️ LOW ${low.join(' & ')} ⚠️` : ''; } ['Food','Meds','Treats'].forEach(s => { const el = document.getElementById('check'+s); if(el) el.checked = !!items[s]; }); }
-  function openHistoryModal() { document.getElementById('historyModal').style.display = 'flex'; loadHistory(7); }
-  function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
   function loadHistory(daysCount) {
     const historyList = document.getElementById('historyList');
     const btnWeek = document.getElementById('btnWeek');
@@ -294,6 +386,25 @@
       });
     });
   }
+
+  function handleSupplyBanner(items) {
+    const low = [];
+    if(items.Food) low.push('FOOD'); if(items.Meds) low.push('MEDS'); if(items.Treats) low.push('TREATS');
+    const b = document.getElementById('supplyBanner');
+    if(b) { b.style.display = low.length > 0 ? 'block' : 'none'; b.innerHTML = low.length > 0 ? `⚠️ LOW ${low.join(' & ')} ⚠️` : ''; }
+    ['Food','Meds','Treats'].forEach(s => { const el = document.getElementById('check'+s); if(el) el.checked = !!items[s]; });
+  }
+
+  function setSyncUI(isSyncing) { const bar = document.getElementById('syncStatus'); if(isSyncing) bar.classList.add('visible'); else bar.classList.remove('visible'); }
+  function closeWalkModal() { document.getElementById('walkModal').style.display = 'none'; }
+  function closeManageRoutineModal() { document.getElementById('manageRoutineModal').style.display = 'none'; }
+  function openSupplyModal() { document.getElementById('supplyModal').style.display = 'flex'; }
+  function closeSupplyModal() { document.getElementById('supplyModal').style.display = 'none'; }
+  function openHistoryModal() { document.getElementById('historyModal').style.display = 'flex'; loadHistory(7); }
+  function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
+  function handleGoogleLogin() { auth.signInWithPopup(provider); }
+  function confirmSignOut() { if(confirm("Sign out?")) auth.signOut().then(() => window.location.reload()); }
+  function setSupplies(item) { db.ref(`supplies/${item}`).set(document.getElementById('check' + item).checked); }
 </script>
 </body>
 </html>
