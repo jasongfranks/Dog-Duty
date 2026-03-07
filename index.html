@@ -255,7 +255,8 @@
       const btn = document.createElement('button');
       btn.id = 'walk-' + w.id;
       btn.className = `task-btn done`;
-      btn.innerHTML = `<span>Walk (${w.time})</span><small style="opacity:0.8">${w.note} by ${w.name}</small>`;
+      // Emoji on left, time/name on right to match Routine format
+      btn.innerHTML = `<span>${w.note} Walk</span><small style="opacity:0.7">✔ ${w.time} (${w.name})</small>`;
       btn.onclick = () => openWalkModal(w);
       wContainer.appendChild(btn);
     });
@@ -312,4 +313,5 @@
 </script>
 </body>
 </html>
+
 
