@@ -7,13 +7,14 @@
   
   <link rel="icon" type="image/png" href="dogdutyicon.png">
   <link rel="apple-touch-icon" href="dogdutyicon.png">
-  
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Dog Duty">
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
 
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -22,15 +23,15 @@
     main { padding: 12px; display: none; }
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #333; }
     .brand-area { display: flex; align-items: center; gap: 8px; }
-    .brand-area img { height: 32px; width: auto; display: block; border-radius: 6px; }
+    .brand-area img { height: 32px; width: 32px; border-radius: 6px; }
     h1 { margin: 0; font-size: 20px; white-space: nowrap; }
-    #syncStatus { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: #4fc3f7; opacity: 0; transition: opacity 0.3s; pointer-events: none; margin-left: 5px; }
+    #syncStatus { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #4fc3f7; opacity: 0; transition: opacity 0.3s; }
     #syncStatus.visible { opacity: 1; }
     .header-controls { display: flex; gap: 8px; }
-    .icon-btn { background: #333; padding: 8px 10px; border-radius: 20px; font-weight: bold; font-size: 14px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 4px; border: 1px solid transparent; transition: transform 0.1s; }
-    .list-container { display: flex; flex-direction: column; gap: 12px; padding-bottom: 10px; }
+    .icon-btn { background: #333; padding: 8px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; color: #fff; cursor: pointer; border: none; display: flex; align-items: center; gap: 6px; }
+    .list-container { display: flex; flex-direction: column; gap: 12px; }
     .section-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; margin: 15px 0 5px 5px; }
-    button.task-btn { width: 100%; text-align: left; font-size: 18px; padding: 20px; border-radius: 18px; border: none; background: #2c2c2c; color: #e0e0e0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.15s ease; position: relative; }
+    button.task-btn { width: 100%; text-align: left; font-size: 18px; padding: 20px; border-radius: 18px; border: none; background: #2c2c2c; color: #e0e0e0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.15s ease; }
     button.task-btn.done { background: #2e7d32; color: #fff; }
     .add-walk-btn { width: 100%; background: #0277bd; color: white; border: none; padding: 18px; border-radius: 18px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); }
@@ -45,28 +46,30 @@
     input:checked + .slider { background-color: #d32f2f; }
     input:checked + .slider:before { transform: translateX(26px); }
     input[type="time"] { width: 100%; padding: 15px; font-size: 28px; border-radius: 14px; border: 2px solid #444; background: #222; color: white; margin-bottom: 15px; text-align: center; }
+    #notifBanner { display: none; background: #ff9800; color: #000; padding: 10px; text-align: center; font-weight: bold; cursor: pointer; }
   </style>
 </head>
 <body>
 
+<div id="notifBanner" onclick="requestNotificationPermission()">🔔 Tap to enable Reminders</div>
 <div id="supplyBanner"></div>
 
 <div id="loginModal" class="modal" style="display:flex;">
   <div class="modal-content">
-    <img src="dogdutyicon.png" style="height:120px; width:120px; margin-bottom:20px; border-radius:24px; box-shadow: 0 8px 16px rgba(0,0,0,0.5);">
-    <h2 style="margin-bottom:10px;">Family Access</h2>
-    <p style="color:#aaa; margin-bottom:25px; font-size:14px;">Sign in with Google to manage Dog Duty.</p>
-    <button id="loginBtn" class="action-btn" onclick="handleGoogleLogin()" style="background:#4285F4; display:flex; align-items:center; justify-content:center; gap:10px; width:100%;">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Sign in with Google
+    <img src="dogdutyicon.png" style="height:100px; width:100px; margin-bottom:20px; border-radius:20px;">
+    <h2>Family Access</h2>
+    <p style="color:#aaa; margin-bottom:20px;">Sign in to manage Dog Duty.</p>
+    <button class="action-btn" onclick="handleGoogleLogin()" style="background:#4285F4; display:flex; align-items:center; justify-content:center; gap:10px; width:100%;">
+      Sign in with Google
     </button>
-    <div id="authError" style="color:#ff5252; margin-top:15px; font-size:12px; font-family:monospace; background:rgba(255,0,0,0.1); padding:10px; border-radius:8px; display:none; word-break:break-all;"></div>
+    <div id="authError" style="color:#ff5252; margin-top:15px; font-size:12px; display:none;"></div>
   </div>
 </div>
 
 <main id="appContent">
   <header>
     <div class="brand-area">
-      <img src="logo.png" alt="Logo">
+      <img src="dogdutyicon.png" alt="Logo">
       <h1>DOG DUTY</h1>
       <span id="syncStatus">Syncing...</span>
     </div>
@@ -74,11 +77,14 @@
       <div class="icon-btn" onclick="confirmSignOut()">👤 <span id="userNameDisplay">...</span></div>
     </div>
   </header>
+
   <div class="section-label">Routine</div>
   <div id="routineButtons" class="list-container"></div>
+
   <div class="section-label">Walks</div>
   <div id="walkList" class="list-container"></div>
   <button class="add-walk-btn" onclick="openWalkModal()">＋ Add Walk</button>
+
   <div style="margin-top:30px; border-top: 1px solid #333; padding-top:20px;">
     <button class="action-btn secondary" onclick="openSupplyModal()">📦 Manage Supplies</button>
   </div>
@@ -87,7 +93,9 @@
 <div id="walkModal" class="modal">
   <div class="modal-content">
     <h2 id="walkModalTitle">Log Walk</h2>
-    <div id="editSaveArea" style="display:none; margin-bottom:15px;"><button class="action-btn" style="background:#0277bd;" onclick="saveWalk(null)">💾 Save Time Change</button></div>
+    <div id="editSaveArea" style="display:none; margin-bottom:15px;">
+      <button class="action-btn" style="background:#0277bd;" onclick="saveWalk(null)">💾 Save Time Change</button>
+    </div>
     <input type="time" id="walkTimeInput">
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
       <button class="action-btn" onclick="saveWalk('pee')">💦 Pee</button>
@@ -95,7 +103,9 @@
       <button class="action-btn" style="grid-column: span 2;" onclick="saveWalk('both')">💦💩 Both</button>
       <button class="action-btn secondary" style="grid-column: span 2; background:#5d4037; color:white;" onclick="saveWalk('backyard')">🏡 Backyard</button>
     </div>
-    <div id="editWalkControls" style="display:none; border-top:1px solid #333; padding-top:10px; margin-top:10px;"><button class="action-btn" style="background:#b71c1c;" onclick="confirmDeleteWalk()">🗑️ Delete Walk</button></div>
+    <div id="editWalkControls" style="display:none; border-top:1px solid #333; padding-top:10px; margin-top:10px;">
+      <button class="action-btn" style="background:#b71c1c;" onclick="confirmDeleteWalk()">🗑️ Delete Walk</button>
+    </div>
     <button class="action-btn secondary" style="margin-top:10px;" onclick="closeWalkModal()">Cancel</button>
   </div>
 </div>
@@ -111,7 +121,6 @@
 </div>
 
 <script>
-  // 1. CONFIG
   const firebaseConfig = {
     apiKey: "AIzaSyBaIQVgPLcCj4T8-wvZ90L9iKSJHZ_7Srg",
     authDomain: "dog-duty-fe307.firebaseapp.com",
@@ -130,23 +139,10 @@
     "genevieve.j.franks@gmail.com"
   ];
 
-  function showError(msg) {
-    const errDiv = document.getElementById('authError');
-    if (errDiv) {
-      errDiv.textContent = msg;
-      errDiv.style.display = 'block';
-    }
-    console.error(msg);
-  }
-
-  try {
-    firebase.initializeApp(firebaseConfig);
-  } catch (e) {
-    showError("Init Error: " + e.message);
-  }
-
+  firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const auth = firebase.auth();
+  const messaging = firebase.messaging();
   const provider = new firebase.auth.GoogleAuthProvider();
 
   let userFirstName = "";
@@ -155,7 +151,6 @@
   let activeRequests = 0;
   const todayKey = new Date().toISOString().split('T')[0];
 
-  // 2. AUTH WATCHER
   auth.onAuthStateChanged(user => {
     if (user) {
       const email = user.email.toLowerCase();
@@ -170,34 +165,49 @@
         document.getElementById('loginModal').style.display = 'none';
         document.getElementById('appContent').style.display = 'block';
         document.getElementById('userNameDisplay').textContent = userFirstName;
+        checkNotificationStatus();
         init();
       } else {
-        showError("Access Denied: " + email);
+        alert("Denied: " + email);
         auth.signOut();
       }
     } else {
       document.getElementById('loginModal').style.display = 'flex';
       document.getElementById('appContent').style.display = 'none';
     }
-  }, (err) => showError("Auth Error: " + err.message));
+  });
 
   function handleGoogleLogin() {
-    document.getElementById('authError').style.display = 'none';
-    auth.signInWithPopup(provider).catch(err => {
-      showError("Login Failed: " + err.code);
-      if (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request') {
-        auth.signInWithRedirect(provider);
-      }
-    });
+    auth.signInWithPopup(provider).catch(err => alert(err.message));
   }
 
   function confirmSignOut() {
     if(confirm("Sign out?")) auth.signOut().then(() => window.location.reload());
   }
 
+  // NOTIFICATION LOGIC
+  function checkNotificationStatus() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      document.getElementById('notifBanner').style.display = 'block';
+    }
+  }
+
+  async function requestNotificationPermission() {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      try {
+        const token = await messaging.getToken({ vapidKey: 'BLuS4PUIOjNW6xufAmRu000AYgmCgF3CniEkOlbOC60hYK9PVWtTjqew3beUyD9IeFQj20vcyG_dfAvUn12Ja1c' });
+        if (token) {
+          db.ref(`fcmTokens/${auth.currentUser.uid}`).set(token);
+          document.getElementById('notifBanner').style.display = 'none';
+        }
+      } catch (e) { console.error(e); }
+    }
+  }
+
+  // CORE APP LOGIC
   function setSyncUI(isSyncing) {
     const bar = document.getElementById('syncStatus');
-    if (!bar) return;
     if (isSyncing) { activeRequests++; bar.classList.add('visible'); } 
     else { activeRequests = Math.max(0, activeRequests - 1); if (activeRequests === 0) bar.classList.remove('visible'); }
   }
@@ -207,8 +217,7 @@
       const data = snapshot.val() || {};
       renderRoutine(data);
       renderWalks(data.Walks);
-    }, (err) => showError("DB Error: " + err.message));
-
+    });
     db.ref('supplies').on('value', snapshot => {
       handleSupplyBanner(snapshot.val() || {});
     });
@@ -216,7 +225,6 @@
 
   function renderRoutine(data) {
     const rContainer = document.getElementById('routineButtons');
-    if (!rContainer) return;
     rContainer.innerHTML = '';
     const tasks = ['Breakfast', 'Blinds', 'Dinner', 'Meds'];
     const emojis = {'Breakfast':'🥣','Dinner':'🍽️','Blinds':'🪟','Meds':'💊'};
@@ -229,7 +237,7 @@
         setSyncUI(true);
         const timeStr = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         const newVal = val ? null : `✔ ${timeStr} (${userFirstName})`;
-        db.ref(`days/${todayKey}/${t}`).set(newVal).then(() => setSyncUI(false)).catch(e => showError(e.message));
+        db.ref(`days/${todayKey}/${t}`).set(newVal).then(() => setSyncUI(false));
       };
       rContainer.appendChild(btn);
     });
@@ -237,12 +245,8 @@
 
   function renderWalks(walksJson) {
     const wContainer = document.getElementById('walkList');
-    if (!wContainer) return;
     wContainer.innerHTML = '';
-    try {
-      activeWalks = walksJson ? JSON.parse(walksJson) : [];
-    } catch(e) { activeWalks = []; }
-    
+    try { activeWalks = walksJson ? JSON.parse(walksJson) : []; } catch(e) { activeWalks = []; }
     if(activeWalks.length === 0) {
       wContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#555;">No walks today</div>';
       return;
@@ -251,7 +255,7 @@
       const btn = document.createElement('button');
       btn.id = 'walk-' + w.id;
       btn.className = `task-btn done`;
-      btn.innerHTML = `<span>${getTimeBasedEmoji(w.time)} Walk (${w.time})</span><small style="opacity:0.8">${w.note} by ${w.name}</small>`;
+      btn.innerHTML = `<span>Walk (${w.time})</span><small style="opacity:0.8">${w.note} by ${w.name}</small>`;
       btn.onclick = () => openWalkModal(w);
       wContainer.appendChild(btn);
     });
@@ -259,91 +263,52 @@
 
   function saveWalk(subAction) {
     setSyncUI(true);
-    const timeEl = document.getElementById('walkTimeInput');
-    const rawTime = timeEl ? timeEl.value : "12:00";
+    const rawTime = document.getElementById('walkTimeInput').value;
     const [h, m] = rawTime.split(':');
     const finalTime = `${((h % 12) || 12)}:${m} ${h >= 12 ? 'PM' : 'AM'}`;
-    const emojiMap = {'pee':'💦','poop':'💩','both':'💦💩','backyard':'🏡❓'};
-    const emoji = subAction ? emojiMap[subAction] : null;
-
+    const emojiMap = {'pee':'💦','poop':'💩','both':'💦💩','backyard':'🏡'};
+    const emoji = subAction ? emojiMap[subAction] : '🚶';
     let newWalks = [...activeWalks];
     if(editingWalkId) {
-      newWalks = newWalks.map(w => w.id == editingWalkId ? {...w, time: finalTime, note: emoji || w.note} : w);
+      newWalks = newWalks.map(w => w.id == editingWalkId ? {...w, time: finalTime, note: emoji} : w);
     } else {
-      newWalks.push({ id: Date.now(), time: finalTime, name: userFirstName, note: emoji || '🚶' });
+      newWalks.push({ id: Date.now(), time: finalTime, name: userFirstName, note: emoji });
     }
-    db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(newWalks)).then(() => { setSyncUI(false); closeWalkModal(); }).catch(e => showError(e.message));
+    db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(newWalks)).then(() => { setSyncUI(false); closeWalkModal(); });
   }
 
   function confirmDeleteWalk() {
     if (confirm("Delete walk?")) {
-      const idToDelete = editingWalkId;
-      const el = document.getElementById('walk-' + idToDelete);
-      if (el) el.remove();
-      setSyncUI(true);
-      const filtered = activeWalks.filter(w => w.id != idToDelete);
-      db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(filtered)).then(() => { setSyncUI(false); closeWalkModal(); });
+      const filtered = activeWalks.filter(w => w.id != editingWalkId);
+      db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(filtered)).then(() => closeWalkModal());
     }
   }
 
   function setSupplies(item) {
-    setSyncUI(true);
-    const isChecked = document.getElementById('check' + item).checked;
-    db.ref(`supplies/${item}`).set(isChecked).then(() => setSyncUI(false));
+    db.ref(`supplies/${item}`).set(document.getElementById('check' + item).checked);
   }
 
   function handleSupplyBanner(items) {
     const low = [];
-    if(items && items.Food) low.push('FOOD');
-    if(items && items.Meds) low.push('MEDS');
-    if(items && items.Treats) low.push('TREATS');
+    if(items.Food) low.push('FOOD'); if(items.Meds) low.push('MEDS'); if(items.Treats) low.push('TREATS');
     const b = document.getElementById('supplyBanner');
-    if (b) {
-        b.style.display = low.length > 0 ? 'block' : 'none';
-        b.innerHTML = low.length > 0 ? `⚠️ LOW ${low.join(' & ')} ⚠️` : '';
-    }
-    if(document.getElementById('checkFood')) {
-      document.getElementById('checkFood').checked = !!(items && items.Food);
-      document.getElementById('checkMeds').checked = !!(items && items.Meds);
-      document.getElementById('checkTreats').checked = !!(items && items.Treats);
-    }
-  }
-
-  function getTimeBasedEmoji(timeStr) {
-    try {
-      const hours = parseInt(timeStr.split(':')[0]) + (timeStr.includes('PM') && !timeStr.startsWith('12') ? 12 : 0);
-      if (hours >= 5 && hours < 11) return '🌅';
-      if (hours >= 11 && hours < 16) return '☀️';
-      if (hours >= 16 && hours < 20) return '🌇';
-      return '🌙';
-    } catch(e) { return '🚶'; }
+    b.style.display = low.length > 0 ? 'block' : 'none';
+    b.innerHTML = low.length > 0 ? `⚠️ LOW ${low.join(' & ')} ⚠️` : '';
+    ['Food','Meds','Treats'].forEach(s => document.getElementById('check'+s).checked = !!items[s]);
   }
 
   function openWalkModal(w = null) {
-    const timeInput = document.getElementById('walkTimeInput');
-    if(w) {
-      editingWalkId = w.id;
-      document.getElementById('walkModalTitle').textContent = "Edit Walk";
-      document.getElementById('editSaveArea').style.display = 'block';
-      document.getElementById('editWalkControls').style.display = 'block';
-      const [t, m] = w.time.split(' '); let [h, min] = t.split(':');
-      if (m === 'PM' && h !== '12') h = parseInt(h) + 12;
-      if (m === 'AM' && h === '12') h = '00';
-      timeInput.value = `${h.toString().padStart(2,'0')}:${min}`;
-    } else {
-      editingWalkId = null;
-      document.getElementById('walkModalTitle').textContent = "Log Walk";
-      document.getElementById('editSaveArea').style.display = 'none';
-      document.getElementById('editWalkControls').style.display = 'none';
-      const now = new Date(); timeInput.value = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-    }
+    editingWalkId = w ? w.id : null;
+    const now = new Date();
+    document.getElementById('walkTimeInput').value = w ? "12:00" : now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
     document.getElementById('walkModal').style.display = 'flex';
+    document.getElementById('editSaveArea').style.display = w ? 'block' : 'none';
+    document.getElementById('editWalkControls').style.display = w ? 'block' : 'none';
   }
 
-  function closeWalkModal() { document.getElementById('walkModal').style.display = 'none'; editingWalkId = null; }
+  function closeWalkModal() { document.getElementById('walkModal').style.display = 'none'; }
   function openSupplyModal() { document.getElementById('supplyModal').style.display = 'flex'; }
   function closeSupplyModal() { document.getElementById('supplyModal').style.display = 'none'; }
 </script>
 </body>
 </html>
-
