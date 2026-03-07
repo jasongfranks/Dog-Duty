@@ -49,17 +49,7 @@
     .action-btn.secondary { background: #333; color: #ccc; }
     
     input[type="time"] { 
-      width: 100%; 
-      display: block; 
-      margin: 0 auto 15px auto; 
-      padding: 15px; 
-      font-size: 28px; 
-      border-radius: 14px; 
-      border: 2px solid #444; 
-      background: #222; 
-      color: white; 
-      text-align: center; 
-      -webkit-appearance: none;
+      width: 100%; display: block; margin: 0 auto 15px auto; padding: 15px; font-size: 28px; border-radius: 14px; border: 2px solid #444; background: #222; color: white; text-align: center; -webkit-appearance: none;
     }
 
     .supply-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 10px; border-bottom: 1px solid #333; }
@@ -72,6 +62,7 @@
 
     .routine-input-group { display: flex; gap: 10px; margin-bottom: 15px; }
     #newRoutineEmoji { width: 60px; text-align: center; font-size: 24px; }
+    .helper-text { font-size: 13px; color: #aaa; margin: 10px 0 15px 0; line-height: 1.4; }
 
     .version-label { text-align: center; margin-top: 40px; opacity: 0.5; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; padding: 10px; }
   </style>
@@ -107,7 +98,7 @@
     <button class="action-btn secondary" style="background:#455a64; margin-top:10px;" onclick="openHistoryModal()">📅 View History</button>
   </div>
 
-  <div class="version-label" onclick="window.location.reload(true)">Version 1.1.5</div>
+  <div class="version-label" onclick="window.location.reload(true)">Version 1.1.6</div>
 </main>
 
 <div id="loginModal" class="modal" style="display:flex;">
@@ -122,7 +113,13 @@
   <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
     <h2>Manage Routines</h2>
     <div id="routineSettingsList" style="text-align:left; margin-bottom:20px;"></div>
+    
     <div style="border-top: 1px solid #333; padding-top: 15px;">
+      <p class="helper-text">
+        Add a new task below. Tap the square to use your phone's <b>Emoji Keyboard</b> to pick an icon! <br>
+        <i>Example: 🪥 Brush Teeth</i>
+      </p>
+      
       <div class="routine-input-group">
         <input type="text" id="newRoutineEmoji" placeholder="🐾" maxlength="2" style="padding:15px; border-radius:10px; border:none; background:#333; color:white;">
         <input type="text" id="newRoutineName" placeholder="Task Name" style="flex-grow:1; padding:15px; border-radius:10px; border:none; background:#333; color:white;">
@@ -288,21 +285,9 @@
   }
 
   function confirmDeleteWalk() { if (confirm("Delete walk?")) { const filtered = activeWalks.filter(w => w.id != editingWalkId); db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(filtered)).then(() => closeWalkModal()); } }
-  function openWalkModal(w = null) { 
-    editingWalkId = w ? w.id : null; 
-    if (w) { 
-      const [t, m] = w.time.split(' '); let [h, min] = t.split(':'); 
-      if (m === 'PM' && h !== '12') h = parseInt(h) + 12; if (m === 'AM' && h === '12') h = '00'; 
-      document.getElementById('walkTimeInput').value = `${h.toString().padStart(2,'0')}:${min}`; 
-    } else { 
-      const now = new Date(); document.getElementById('walkTimeInput').value = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0'); 
-    } 
-    document.getElementById('walkModal').style.display = 'flex'; 
-    document.getElementById('editSaveArea').style.display = w ? 'block' : 'none'; 
-    document.getElementById('editWalkControls').style.display = w ? 'block' : 'none'; 
-    document.getElementById('walkModalTitle').textContent = w ? "Edit Walk" : "Log Walk"; 
-  }
+  function openWalkModal(w = null) { editingWalkId = w ? w.id : null; if (w) { const [t, m] = w.time.split(' '); let [h, min] = t.split(':'); if (m === 'PM' && h !== '12') h = parseInt(h) + 12; if (m === 'AM' && h === '12') h = '00'; document.getElementById('walkTimeInput').value = `${h.toString().padStart(2,'0')}:${min}`; } else { const now = new Date(); document.getElementById('walkTimeInput').value = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0'); } document.getElementById('walkModal').style.display = 'flex'; document.getElementById('editSaveArea').style.display = w ? 'block' : 'none'; document.getElementById('editWalkControls').style.display = w ? 'block' : 'none'; document.getElementById('walkModalTitle').textContent = w ? "Edit Walk" : "Log Walk"; }
   function closeWalkModal() { document.getElementById('walkModal').style.display = 'none'; }
+
   function openManageRoutineModal() {
     const list = document.getElementById('routineSettingsList');
     list.innerHTML = '';
