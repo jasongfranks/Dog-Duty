@@ -31,8 +31,36 @@
     .icon-btn { background: #333; padding: 8px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; color: #fff; cursor: pointer; border: none; display: flex; align-items: center; gap: 6px; }
     .list-container { display: flex; flex-direction: column; gap: 12px; }
     .section-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; margin: 15px 0 5px 5px; }
-    button.task-btn { width: 100%; text-align: left; font-size: 18px; padding: 20px; border-radius: 18px; border: none; background: #2c2c2c; color: #e0e0e0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.15s ease; }
+    
+    button.task-btn { 
+      width: 100%; 
+      text-align: left; 
+      font-size: 18px; 
+      padding: 20px; 
+      border-radius: 18px; 
+      border: none; 
+      background: #2c2c2c; 
+      color: #e0e0e0; 
+      cursor: pointer; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
+      transition: all 0.15s ease; 
+    }
     button.task-btn.done { background: #2e7d32; color: #fff; }
+
+    /* New styles for centered walk content */
+    .walk-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    .walk-left { flex: 1; text-align: left; }
+    .walk-center { flex: 2; text-align: center; }
+    .walk-right { flex: 1; text-align: right; }
+
     .add-walk-btn { width: 100%; background: #0277bd; color: white; border: none; padding: 18px; border-radius: 18px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); }
     .modal-content { background: #1e1e1e; padding: 25px; border-radius: 24px; text-align: center; width: 92%; max-width: 400px; border: 1px solid #333; }
@@ -46,30 +74,14 @@
     input:checked + .slider { background-color: #d32f2f; }
     input:checked + .slider:before { transform: translateX(26px); }
     input[type="time"] { width: 100%; padding: 15px; font-size: 28px; border-radius: 14px; border: 2px solid #444; background: #222; color: white; margin-bottom: 15px; text-align: center; }
-    #notifBanner { display: none; background: #ff9800; color: #000; padding: 10px; text-align: center; font-weight: bold; cursor: pointer; }
   </style>
 </head>
 <body>
 
-<!--<div id="notifBanner" onclick="requestNotificationPermission()">🔔 Tap to enable Reminders</div>
-<div id="supplyBanner"></div>-->
-
-<div id="loginModal" class="modal" style="display:flex;">
-  <div class="modal-content">
-    <img src="dogdutyicon.png" style="height:100px; width:100px; margin-bottom:20px; border-radius:20px;">
-    <h2>Family Access</h2>
-    <p style="color:#aaa; margin-bottom:20px;">Sign in to manage Dog Duty.</p>
-    <button class="action-btn" onclick="handleGoogleLogin()" style="background:#4285F4; display:flex; align-items:center; justify-content:center; gap:10px; width:100%;">
-      Sign in with Google
-    </button>
-    <div id="authError" style="color:#ff5252; margin-top:15px; font-size:12px; display:none;"></div>
-  </div>
-</div>
-
 <main id="appContent">
   <header>
     <div class="brand-area">
-      <img src="dogdutyicon.png" alt="Logo">
+      <img src="logo.png" alt="Logo">
       <h1>DOG DUTY</h1>
       <span id="syncStatus">Syncing...</span>
     </div>
@@ -89,6 +101,18 @@
     <button class="action-btn secondary" onclick="openSupplyModal()">📦 Manage Supplies</button>
   </div>
 </main>
+
+<div id="loginModal" class="modal" style="display:flex;">
+  <div class="modal-content">
+    <img src="dogdutyicon.png" style="height:100px; width:100px; margin-bottom:20px; border-radius:20px;">
+    <h2>Family Access</h2>
+    <p style="color:#aaa; margin-bottom:20px;">Sign in to manage Dog Duty.</p>
+    <button class="action-btn" onclick="handleGoogleLogin()" style="background:#4285F4; display:flex; align-items:center; justify-content:center; gap:10px; width:100%;">
+      Sign in with Google
+    </button>
+    <div id="authError" style="color:#ff5252; margin-top:15px; font-size:12px; display:none;"></div>
+  </div>
+</div>
 
 <div id="walkModal" class="modal">
   <div class="modal-content">
@@ -165,7 +189,6 @@
         document.getElementById('loginModal').style.display = 'none';
         document.getElementById('appContent').style.display = 'block';
         document.getElementById('userNameDisplay').textContent = userFirstName;
-        checkNotificationStatus();
         init();
       } else {
         alert("Denied: " + email);
@@ -185,27 +208,6 @@
     if(confirm("Sign out?")) auth.signOut().then(() => window.location.reload());
   }
 
-  // NOTIFICATION LOGIC
-  function checkNotificationStatus() {
-    if ('Notification' in window && Notification.permission === 'default') {
-      document.getElementById('notifBanner').style.display = 'block';
-    }
-  }
-
-  async function requestNotificationPermission() {
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      try {
-        const token = await messaging.getToken({ vapidKey: 'BLuS4PUIOjNW6xufAmRu000AYgmCgF3CniEkOlbOC60hYK9PVWtTjqew3beUyD9IeFQj20vcyG_dfAvUn12Ja1c' });
-        if (token) {
-          db.ref(`fcmTokens/${auth.currentUser.uid}`).set(token);
-          document.getElementById('notifBanner').style.display = 'none';
-        }
-      } catch (e) { console.error(e); }
-    }
-  }
-
-  // CORE APP LOGIC
   function setSyncUI(isSyncing) {
     const bar = document.getElementById('syncStatus');
     if (isSyncing) { activeRequests++; bar.classList.add('visible'); } 
@@ -243,20 +245,45 @@
     });
   }
 
+  // Helper function to get time-of-day emoji
+  function getTimeEmoji(timeStr) {
+    const [time, period] = timeStr.split(' ');
+    let [hour] = time.split(':').map(Number);
+    if (period === 'PM' && hour !== 12) hour += 12;
+    if (period === 'AM' && hour === 12) hour = 0;
+
+    if (hour >= 5 && hour < 10) return '🌅'; // Sunrise
+    if (hour >= 10 && hour < 17) return '☀️'; // Sun
+    if (hour >= 17 && hour < 20) return '🌇'; // Sunset
+    return '🌙'; // Night
+  }
+
   function renderWalks(walksJson) {
     const wContainer = document.getElementById('walkList');
     wContainer.innerHTML = '';
     try { activeWalks = walksJson ? JSON.parse(walksJson) : []; } catch(e) { activeWalks = []; }
+    
     if(activeWalks.length === 0) {
       wContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#555;">No walks today</div>';
       return;
     }
+
     activeWalks.forEach(w => {
       const btn = document.createElement('button');
       btn.id = 'walk-' + w.id;
       btn.className = `task-btn done`;
-      // Emoji on left, time/name on right to match Routine format
-      btn.innerHTML = `<span>${w.note} Walk</span><small style="opacity:0.7">✔ ${w.time} (${w.name})</small>`;
+      
+      const timeOfDayEmoji = getTimeEmoji(w.time);
+      
+      // Structure: Left (Time Emoji), Center (Action), Right (Check/Time/User)
+      btn.innerHTML = `
+        <div class="walk-content">
+          <div class="walk-left">${timeOfDayEmoji}</div>
+          <div class="walk-center">${w.note}</div>
+          <div class="walk-right"><small style="opacity:0.7">✔ ${w.time} (${w.name})</small></div>
+        </div>
+      `;
+      
       btn.onclick = () => openWalkModal(w);
       wContainer.appendChild(btn);
     });
@@ -268,7 +295,10 @@
     const [h, m] = rawTime.split(':');
     const finalTime = `${((h % 12) || 12)}:${m} ${h >= 12 ? 'PM' : 'AM'}`;
     const emojiMap = {'pee':'💦','poop':'💩','both':'💦💩','backyard':'🏡'};
-    const emoji = subAction ? emojiMap[subAction] : '🚶';
+    
+    // Default to a walk icon if no subAction (like just editing time)
+    const emoji = subAction ? emojiMap[subAction] : (editingWalkId ? activeWalks.find(x => x.id === editingWalkId).note : '🚶');
+    
     let newWalks = [...activeWalks];
     if(editingWalkId) {
       newWalks = newWalks.map(w => w.id == editingWalkId ? {...w, time: finalTime, note: emoji} : w);
@@ -293,18 +323,35 @@
     const low = [];
     if(items.Food) low.push('FOOD'); if(items.Meds) low.push('MEDS'); if(items.Treats) low.push('TREATS');
     const b = document.getElementById('supplyBanner');
-    b.style.display = low.length > 0 ? 'block' : 'none';
-    b.innerHTML = low.length > 0 ? `⚠️ LOW ${low.join(' & ')} ⚠️` : '';
-    ['Food','Meds','Treats'].forEach(s => document.getElementById('check'+s).checked = !!items[s]);
+    if(b) {
+      b.style.display = low.length > 0 ? 'block' : 'none';
+      b.innerHTML = low.length > 0 ? `⚠️ LOW ${low.join(' & ')} ⚠️` : '';
+    }
+    ['Food','Meds','Treats'].forEach(s => {
+      const el = document.getElementById('check'+s);
+      if(el) el.checked = !!items[s];
+    });
   }
 
   function openWalkModal(w = null) {
     editingWalkId = w ? w.id : null;
     const now = new Date();
-    document.getElementById('walkTimeInput').value = w ? "12:00" : now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+    const currentTimeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+    
+    if (w) {
+      const [t, m] = w.time.split(' ');
+      let [h, min] = t.split(':');
+      if (m === 'PM' && h !== '12') h = parseInt(h) + 12;
+      if (m === 'AM' && h === '12') h = '00';
+      document.getElementById('walkTimeInput').value = `${h.toString().padStart(2,'0')}:${min}`;
+    } else {
+      document.getElementById('walkTimeInput').value = currentTimeStr;
+    }
+    
     document.getElementById('walkModal').style.display = 'flex';
     document.getElementById('editSaveArea').style.display = w ? 'block' : 'none';
     document.getElementById('editWalkControls').style.display = w ? 'block' : 'none';
+    document.getElementById('walkModalTitle').textContent = w ? "Edit Walk" : "Log Walk";
   }
 
   function closeWalkModal() { document.getElementById('walkModal').style.display = 'none'; }
@@ -313,5 +360,3 @@
 </script>
 </body>
 </html>
-
-
