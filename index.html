@@ -117,9 +117,10 @@
 
   <div style="margin-top:30px; border-top: 1px solid #333; padding-top:20px;">
     <button class="action-btn secondary" onclick="openSupplyModal()">📦 Manage Supplies</button>
+    <button class="action-btn secondary" style="background:#455a64; margin-top:10px;" onclick="openHistoryModal()">📅 View History</button>
   </div>
 
-  <div class="version-label" onclick="window.location.reload(true)">Version 1.0.8</div>
+  <div class="version-label" onclick="window.location.reload(true)">Version 1.0.9</div>
 </main>
 
 <div id="loginModal" class="modal" style="display:flex;">
@@ -165,6 +166,18 @@
     <div class="supply-row"><span>💊 Meds</span><label class="switch"><input type="checkbox" id="checkMeds" onchange="setSupplies('Meds')"><span class="slider"></span></label></div>
     <div class="supply-row"><span>🦴 Treats</span><label class="switch"><input type="checkbox" id="checkTreats" onchange="setSupplies('Treats')"><span class="slider"></span></label></div>
     <button class="action-btn secondary" style="margin-top:20px;" onclick="closeSupplyModal()">Close</button>
+  </div>
+</div>
+
+<div id="historyModal" class="modal">
+  <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column;">
+    <h2 style="margin-top: 0;">Activity History</h2>
+    <div style="display: flex; background: #333; border-radius: 12px; padding: 4px; margin-bottom: 15px;">
+      <button id="btnWeek" onclick="loadHistory(7)" style="flex:1; border:none; background:#0277bd; color:white; padding:8px; border-radius:10px; font-weight:bold; cursor:pointer;">Last 7 Days</button>
+      <button id="btnMonth" onclick="loadHistory(30)" style="flex:1; border:none; background:transparent; color:#aaa; padding:8px; border-radius:10px; font-weight:bold; cursor:pointer;">Last 30 Days</button>
+    </div>
+    <div id="historyList" style="text-align: left; overflow-y: auto; flex-grow: 1; padding-right: 5px;"></div>
+    <button class="action-btn secondary" style="margin-top: 15px;" onclick="closeHistoryModal()">Close</button>
   </div>
 </div>
 
@@ -274,7 +287,6 @@
       let [hour] = time.split(':').map(Number);
       if (period === 'PM' && hour !== 12) hour += 12;
       if (period === 'AM' && hour === 12) hour = 0;
-
       if (hour >= 5 && hour < 11) return '🌅';
       if (hour >= 11 && hour < 17) return '☀️';
       if (hour >= 17 && hour < 20) return '🌇';
@@ -296,9 +308,7 @@
       const btn = document.createElement('button');
       btn.id = 'walk-' + w.id;
       btn.className = `task-btn done`;
-      
       const timeOfDayEmoji = getTimeEmoji(w.time);
-      
       btn.innerHTML = `
         <div class="walk-content">
           <div class="walk-left">${timeOfDayEmoji} Walk</div>
@@ -306,7 +316,6 @@
           <div class="walk-right"><small style="opacity:0.7">✔ ${w.time} (${w.name})</small></div>
         </div>
       `;
-      
       btn.onclick = () => openWalkModal(w);
       wContainer.appendChild(btn);
     });
@@ -319,7 +328,6 @@
     const finalTime = `${((h % 12) || 12)}:${m} ${h >= 12 ? 'PM' : 'AM'}`;
     const emojiMap = {'pee':'💦','poop':'💩','both':'💦💩','backyard':'🏡'};
     const emoji = subAction ? emojiMap[subAction] : (editingWalkId ? activeWalks.find(x => x.id === editingWalkId).note : '🚶');
-    
     let newWalks = [...activeWalks];
     if(editingWalkId) {
       newWalks = newWalks.map(w => w.id == editingWalkId ? {...w, time: finalTime, note: emoji} : w);
@@ -375,6 +383,65 @@
   function closeWalkModal() { document.getElementById('walkModal').style.display = 'none'; }
   function openSupplyModal() { document.getElementById('supplyModal').style.display = 'flex'; }
   function closeSupplyModal() { document.getElementById('supplyModal').style.display = 'none'; }
+
+  function openHistoryModal() {
+    document.getElementById('historyModal').style.display = 'flex';
+    loadHistory(7);
+  }
+
+  function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
+
+  function loadHistory(daysCount) {
+    const historyList = document.getElementById('historyList');
+    const btnWeek = document.getElementById('btnWeek');
+    const btnMonth = document.getElementById('btnMonth');
+    if(daysCount === 7) {
+      btnWeek.style.background = '#0277bd'; btnWeek.style.color = 'white';
+      btnMonth.style.background = 'transparent'; btnMonth.style.color = '#aaa';
+    } else {
+      btnMonth.style.background = '#0277bd'; btnMonth.style.color = 'white';
+      btnWeek.style.background = 'transparent'; btnWeek.style.color = '#aaa';
+    }
+    historyList.innerHTML = '<p style="text-align:center; opacity:0.5;">Fetching records...</p>';
+    db.ref('days').limitToLast(daysCount).once('value', snapshot => {
+      const allDays = snapshot.val() || {};
+      historyList.innerHTML = '';
+      const sortedKeys = Object.keys(allDays).sort().reverse();
+      if (sortedKeys.length === 0) {
+        historyList.innerHTML = '<p style="text-align:center; color:#666;">No data found for this period.</p>';
+        return;
+      }
+      sortedKeys.forEach(dateKey => {
+        const dayData = allDays[dateKey];
+        const daySection = document.createElement('div');
+        daySection.style.cssText = "margin-bottom:12px; padding:12px; background:#252525; border-radius:15px; border-left:4px solid #4caf50;";
+        const dateObj = new Date(dateKey + 'T00:00:00');
+        const isToday = dateKey === todayKey;
+        const dateDisplay = isToday ? "Today" : dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+        let routines = [];
+        ['Breakfast', 'Blinds', 'Dinner', 'Meds'].forEach(t => {
+          if(dayData[t]) {
+            const timeOnly = dayData[t].replace('✔ ', '');
+            routines.push(`<span style="display:inline-block; background:#1b5e20; padding:2px 8px; border-radius:8px; margin:2px; font-size:11px;">${t}: ${timeOnly}</span>`);
+          }
+        });
+        let walksArr = [];
+        if (dayData.Walks) {
+          try {
+            JSON.parse(dayData.Walks).forEach(w => {
+              walksArr.push(`<div style="font-size:13px; margin-top:5px; color:#ddd;">${w.note} ${w.time} <span style="opacity:0.6">(${w.name})</span></div>`);
+            });
+          } catch(e) {}
+        }
+        daySection.innerHTML = `
+          <div style="font-weight:800; color:#4fc3f7; font-size:14px; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">${dateDisplay}</div>
+          <div style="display:flex; flex-wrap:wrap; margin-bottom:8px;">${routines.join('') || '<span style="font-size:11px; opacity:0.4;">No routine tasks</span>'}</div>
+          <div style="border-top:1px solid #333; padding-top:5px;">${walksArr.join('') || '<span style="font-size:11px; opacity:0.4;">No walks</span>'}</div>
+        `;
+        historyList.appendChild(daySection);
+      });
+    });
+  }
 </script>
 </body>
 </html>
