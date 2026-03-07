@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Dog Duty</title>
   
-  <link rel="icon" type="image/png" href="DogDutyIcon.png">
-  <link rel="apple-touch-icon" href="DogDutyIcon.png">
+  <link rel="icon" type="image/png" href="dogdutyicon.png">
+  <link rel="apple-touch-icon" href="dogdutyicon.png">
   
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,7 +22,7 @@
     main { padding: 12px; display: none; }
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #333; }
     .brand-area { display: flex; align-items: center; gap: 8px; }
-    .brand-area img { height: 32px; width: auto; display: block; }
+    .brand-area img { height: 32px; width: auto; display: block; border-radius: 6px; }
     h1 { margin: 0; font-size: 20px; white-space: nowrap; }
     #syncStatus { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: #4fc3f7; opacity: 0; transition: opacity 0.3s; pointer-events: none; margin-left: 5px; }
     #syncStatus.visible { opacity: 1; }
@@ -53,9 +53,9 @@
 
 <div id="loginModal" class="modal" style="display:flex;">
   <div class="modal-content">
-    <img src="https://dog-duty.netlify.app/logo.png" style="height:80px; margin-bottom:20px;">
-    <h2>Family Access</h2>
-    <p style="color:#aaa; margin-bottom:20px;">Sign in with Google to manage Dog Duty.</p>
+    <img src="dogdutyicon.png" style="height:120px; width:120px; margin-bottom:20px; border-radius:24px; box-shadow: 0 8px 16px rgba(0,0,0,0.5);">
+    <h2 style="margin-bottom:10px;">Family Access</h2>
+    <p style="color:#aaa; margin-bottom:25px; font-size:14px;">Sign in with Google to manage Dog Duty.</p>
     <button id="loginBtn" class="action-btn" onclick="handleGoogleLogin()" style="background:#4285F4; display:flex; align-items:center; justify-content:center; gap:10px; width:100%;">
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Sign in with Google
     </button>
@@ -66,7 +66,7 @@
 <main id="appContent">
   <header>
     <div class="brand-area">
-      <img src="https://dog-duty.netlify.app/logo.png" alt="Logo">
+      <img src="dogdutyicon.png" alt="Logo">
       <h1>DOG DUTY</h1>
       <span id="syncStatus">Syncing...</span>
     </div>
@@ -111,6 +111,7 @@
 </div>
 
 <script>
+  // 1. CONFIG
   const firebaseConfig = {
     apiKey: "AIzaSyBaIQVgPLcCj4T8-wvZ90L9iKSJHZ_7Srg",
     authDomain: "dog-duty-fe307.firebaseapp.com",
@@ -129,7 +130,6 @@
     "genevieve.j.franks@gmail.com"
   ];
 
-  // Helper to show errors
   function showError(msg) {
     const errDiv = document.getElementById('authError');
     if (errDiv) {
@@ -139,7 +139,6 @@
     console.error(msg);
   }
 
-  // Initializing Firebase
   try {
     firebase.initializeApp(firebaseConfig);
   } catch (e) {
@@ -160,7 +159,6 @@
   auth.onAuthStateChanged(user => {
     if (user) {
       const email = user.email.toLowerCase();
-      // Ignore dots in Gmail
       const normalizedEmail = email.replace(/\.(?=[^@]*@gmail\.com)/g, "");
       const isApproved = APPROVED_EMAILS.some(e => {
         const approvedNormalized = e.toLowerCase().replace(/\.(?=[^@]*@gmail\.com)/g, "");
@@ -181,13 +179,12 @@
       document.getElementById('loginModal').style.display = 'flex';
       document.getElementById('appContent').style.display = 'none';
     }
-  }, (err) => showError("Auth State Error: " + err.message));
+  }, (err) => showError("Auth Error: " + err.message));
 
   function handleGoogleLogin() {
-    // Popup is better for debugging logic flow
+    document.getElementById('authError').style.display = 'none';
     auth.signInWithPopup(provider).catch(err => {
-      showError("Login Failed: " + err.code + " - " + err.message);
-      // If popup fails on mobile, try redirect as fallback
+      showError("Login Failed: " + err.code);
       if (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request') {
         auth.signInWithRedirect(provider);
       }
@@ -198,7 +195,6 @@
     if(confirm("Sign out?")) auth.signOut().then(() => window.location.reload());
   }
 
-  // 3. CORE LOGIC
   function setSyncUI(isSyncing) {
     const bar = document.getElementById('syncStatus');
     if (!bar) return;
@@ -350,4 +346,3 @@
 </script>
 </body>
 </html>
-
