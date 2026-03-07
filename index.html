@@ -24,11 +24,17 @@
     main { padding: 12px; display: none; }
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #333; }
     
-    .brand-area { display: flex; align-items: center; gap: 8px; }
-    /* Prevent header logo squashing */
-    .brand-area img { height: 32px; width: 32px; min-width: 32px; border-radius: 6px; object-fit: cover; }
+    .brand-area { display: flex; align-items: center; gap: 10px; }
     
-    h1 { margin: 0; font-size: 20px; white-space: nowrap; }
+    /* FIX FOR SQUISHED LOGO: Fixed height, automatic width */
+    .brand-area img { 
+      height: 30px; 
+      width: auto; 
+      max-width: 120px; 
+      border-radius: 4px; 
+    }
+    
+    h1 { margin: 0; font-size: 20px; white-space: nowrap; font-weight: 800; letter-spacing: -0.5px; }
     #syncStatus { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #4fc3f7; opacity: 0; transition: opacity 0.3s; }
     #syncStatus.visible { opacity: 1; }
     .header-controls { display: flex; gap: 8px; }
@@ -61,7 +67,6 @@
       width: 100%;
       gap: 12px;
     }
-    /* Matched weight to routine task buttons */
     .walk-left { 
       text-align: left; 
       font-size: 18px; 
@@ -117,6 +122,8 @@
   <div style="margin-top:30px; border-top: 1px solid #333; padding-top:20px;">
     <button class="action-btn secondary" onclick="openSupplyModal()">📦 Manage Supplies</button>
   </div>
+
+  <div class="section-label" style="text-align:center; margin-top:40px; opacity:0.5;">Version 1.0.3</div>
 </main>
 
 <div id="loginModal" class="modal" style="display:flex;">
