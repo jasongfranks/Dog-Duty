@@ -63,8 +63,8 @@
     .routine-input-group { display: flex; gap: 10px; margin-bottom: 15px; }
     #newRoutineEmoji { width: 60px; text-align: center; font-size: 24px; }
     
-    /* Spacing fix for helper text */
-    .helper-text { font-size: 13px; color: #aaa; margin: 5px 0 15px 0; line-height: 1.4; }
+    /* Strict helper text reset to eliminate extra lines */
+    .helper-text { font-size: 13px; color: #aaa; margin: 0 0 15px 0; padding-top: 10px; line-height: 1.4; display: block; }
 
     .version-label { text-align: center; margin-top: 40px; opacity: 0.5; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; padding: 10px; }
   </style>
@@ -100,7 +100,7 @@
     <button class="action-btn secondary" style="background:#455a64; margin-top:10px;" onclick="openHistoryModal()">📅 View History</button>
   </div>
 
-  <div class="version-label" onclick="window.location.reload(true)">Version 1.1.7</div>
+  <div class="version-label" onclick="window.location.reload(true)">Version 1.1.8</div>
 </main>
 
 <div id="loginModal" class="modal" style="display:flex;">
@@ -116,7 +116,7 @@
     <h2>Manage Routines</h2>
     <div id="routineSettingsList" style="text-align:left; margin-bottom:20px;"></div>
     
-    <div style="border-top: 1px solid #333; padding-top: 15px;">
+    <div style="border-top: 1px solid #333; padding: 0;">
       <p class="helper-text">
         Add a task below. Tap the square to use your phone's <b>Emoji Keyboard</b> for an icon! <br>
         <i>Example: 🪥 Brush Teeth</i>
