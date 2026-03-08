@@ -211,7 +211,7 @@
           document.getElementById('userNameDisplay').textContent = userFirstName;
           init();
         } else {
-          alert("Access Denied: Email not on allowlist.");
+          alert("Access Denied: Email address not found.");
           auth.signOut();
         }
       }).catch(() => {
@@ -379,6 +379,7 @@
 </script>
 </body>
 </html>
+
 
 
 
