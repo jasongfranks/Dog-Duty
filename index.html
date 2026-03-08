@@ -67,12 +67,14 @@
     /**
      * HISTORY ACCORDION STYLES
      */
+    .history-month-label { font-size: 11px; color: #4fc3f7; text-transform: uppercase; letter-spacing: 2px; margin: 20px 0 10px 5px; font-weight: bold; }
     .history-week-header { 
       background: #333; padding: 12px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; 
       display: flex; justify-content: space-between; align-items: center; font-weight: bold; border: 1px solid #444;
     }
     .history-week-content { display: none; margin-bottom: 20px; padding-left: 10px; border-left: 2px solid #333; }
     .history-week-content.expanded { display: block; }
+    .current-badge { font-size: 10px; color: #4caf50; background: rgba(76, 175, 80, 0.1); padding: 2px 6px; border-radius: 4px; margin-left: 8px; border: 1px solid rgba(76, 175, 80, 0.3); }
 
     /**
      * TOGGLE SWITCHES & INPUT GROUPS
@@ -191,7 +193,10 @@
   <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column;">
     <h2>Activity History</h2>
     <div id="historyList" style="text-align: left; overflow-y: auto; flex-grow: 1; padding-right: 5px;"></div>
-    <button class="action-btn secondary" style="margin-top: 15px;" onclick="closeHistoryModal()">Close</button>
+    <div style="border-top:1px solid #333; margin-top:10px; padding-top:10px;">
+      <button class="action-btn" style="background:#455a64; font-size:14px;" onclick="exportFullHistoryCSV()">📥 Download ALL Data (CSV)</button>
+      <button class="action-btn secondary" style="margin-top: 5px;" onclick="closeHistoryModal()">Close</button>
+    </div>
   </div>
 </div>
 
@@ -199,7 +204,7 @@
   /**
    * SECTION 1: CONFIGURATION & GLOBAL STATE
    */
-  const APP_VERSION = "Version 1.3.4";
+  const APP_VERSION = "Version 1.4.1";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBaIQVgPLcCj4T8-wvZ90L9iKSJHZ_7Srg",
@@ -476,14 +481,17 @@
   function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
 
   /**
-   * SECTION 6: SYSTEM UTILITIES
+   * SECTION 6: SYSTEM UTILITIES & EXPORT
+   */
+
+  /**
+   * Organizes the last 30 days by Month and Weekly accordions.
    */
   function loadHistory() {
-    const daysCount = 30;
     const historyList = document.getElementById('historyList');
-    historyList.innerHTML = '<p style="text-align:center; opacity:0.5;">Organizing weeks...</p>';
+    historyList.innerHTML = '<p style="text-align:center; opacity:0.5;">Organizing history...</p>';
 
-    db.ref('days').limitToLast(daysCount).once('value', snapshot => {
+    db.ref('days').limitToLast(30).once('value', snapshot => {
       const allDays = snapshot.val() || {};
       historyList.innerHTML = '';
       const sortedKeys = Object.keys(allDays).sort().reverse();
@@ -493,66 +501,110 @@
         return;
       }
 
-      // GROUPING LOGIC
-      const weeks = {};
+      const hierarchy = {};
       sortedKeys.forEach(dateKey => {
         const d = new Date(dateKey + 'T00:00:00');
+        const monthLabel = d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+        
         const day = d.getDay();
         const diff = d.getDate() - day; 
-        const sunday = new Date(d.setDate(diff)).toISOString().split('T')[0];
+        const sunday = new Date(new Date(d).setDate(diff)).toISOString().split('T')[0];
         
-        if (!weeks[sunday]) weeks[sunday] = [];
-        weeks[sunday].push(dateKey);
+        if (!hierarchy[monthLabel]) hierarchy[monthLabel] = {};
+        if (!hierarchy[monthLabel][sunday]) hierarchy[monthLabel][sunday] = [];
+        hierarchy[monthLabel][sunday].push(dateKey);
       });
 
-      // RENDER WEEKLY ACCORDIONS
-      Object.keys(weeks).sort().reverse().forEach((sundayKey, index) => {
-        const weekDiv = document.createElement('div');
-        const isCurrentWeek = index === 0;
-        
-        const header = document.createElement('div');
-        header.className = 'history-week-header';
-        header.innerHTML = `<span>Week of ${new Date(sundayKey + 'T00:00:00').toLocaleDateString(undefined, {month:'short', day:'numeric'})}</span> <span>${isCurrentWeek ? '▼' : '▶'}</span>`;
-        
-        const content = document.createElement('div');
-        content.className = `history-week-content ${isCurrentWeek ? 'expanded' : ''}`;
-        
-        header.onclick = () => {
-          content.classList.toggle('expanded');
-          header.querySelector('span:last-child').textContent = content.classList.contains('expanded') ? '▼' : '▶';
-        };
+      let firstWeekGlobal = true;
+      Object.entries(hierarchy).forEach(([month, weeks]) => {
+        const monthHeader = document.createElement('div');
+        monthHeader.className = 'history-month-label';
+        monthHeader.textContent = month;
+        historyList.appendChild(monthHeader);
 
-        weeks[sundayKey].forEach(dateKey => {
-          const dayData = allDays[dateKey];
-          const daySection = document.createElement('div');
-          daySection.style.cssText = "margin-bottom:12px; padding:12px; background:#252525; border-radius:15px; border-left:4px solid #4caf50;";
+        Object.keys(weeks).sort().reverse().forEach(sundayKey => {
+          const weekDiv = document.createElement('div');
+          const isExpanded = firstWeekGlobal;
+          const badgeText = firstWeekGlobal ? '<span class="current-badge">(Current)</span>' : '';
+          firstWeekGlobal = false;
+
+          const header = document.createElement('div');
+          header.className = 'history-week-header';
+          header.innerHTML = `<div>Week of ${new Date(sundayKey + 'T00:00:00').toLocaleDateString(undefined, {month:'short', day:'numeric'})} ${badgeText}</div> <span>${isExpanded ? '▼' : '▶'}</span>`;
           
-          const dateObj = new Date(dateKey + 'T00:00:00');
-          const dateDisplay = dateKey === todayKey ? "Today" : dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+          const content = document.createElement('div');
+          content.className = `history-week-content ${isExpanded ? 'expanded' : ''}`;
           
-          let routines = [];
-          Object.entries(dayData).forEach(([key, val]) => {
-            if (key !== "Walks" && typeof val === 'string' && val.includes('✔')) {
-              const setting = currentRoutines.find(r => r.name === key);
-              routines.push(`<span style="display:inline-block; background:#1b5e20; padding:2px 8px; border-radius:8px; margin:2px; font-size:11px;">${setting ? setting.emoji : '📋'} ${key}: ${val.replace('✔ ', '')}</span>`);
+          header.onclick = () => {
+            content.classList.toggle('expanded');
+            header.querySelector('span:last-child').textContent = content.classList.contains('expanded') ? '▼' : '▶';
+          };
+
+          weeks[sundayKey].forEach(dateKey => {
+            const dayData = allDays[dateKey];
+            const daySection = document.createElement('div');
+            daySection.style.cssText = "margin-bottom:12px; padding:12px; background:#252525; border-radius:15px; border-left:4px solid #4caf50;";
+            
+            const dateObj = new Date(dateKey + 'T00:00:00');
+            const dateDisplay = dateKey === todayKey ? "Today" : dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+            
+            let routines = [];
+            Object.entries(dayData).forEach(([key, val]) => {
+              if (key !== "Walks" && typeof val === 'string' && val.includes('✔')) {
+                const setting = currentRoutines.find(r => r.name === key);
+                routines.push(`<span style="display:inline-block; background:#1b5e20; padding:2px 8px; border-radius:8px; margin:2px; font-size:11px;">${setting ? setting.emoji : '📋'} ${key}: ${val.replace('✔ ', '')}</span>`);
+              }
+            });
+
+            let walksArr = [];
+            if (dayData.Walks) {
+              try { JSON.parse(dayData.Walks).forEach(w => walksArr.push(`<div style="font-size:13px; margin-top:5px; color:#ddd;">${w.note} ${w.time} <span style="opacity:0.6">(${w.name})</span></div>`)); } catch(e) {}
             }
+
+            daySection.innerHTML = `<div style="font-weight:800; color:#4fc3f7; font-size:14px; margin-bottom:8px;">${dateDisplay}</div><div>${routines.join('')}</div><div style="border-top:1px solid #333; margin-top:5px; padding-top:5px;">${walksArr.join('')}</div>`;
+            content.appendChild(daySection);
           });
 
-          let walksArr = [];
-          if (dayData.Walks) {
-            try { 
-              JSON.parse(dayData.Walks).forEach(w => walksArr.push(`<div style="font-size:13px; margin-top:5px; color:#ddd;">${w.note} ${w.time} <span style="opacity:0.6">(${w.name})</span></div>`)); 
-            } catch(e) {}
-          }
-
-          daySection.innerHTML = `<div style="font-weight:800; color:#4fc3f7; font-size:14px; margin-bottom:8px;">${dateDisplay}</div><div>${routines.join('')}</div><div style="border-top:1px solid #333; margin-top:5px; padding-top:5px;">${walksArr.join('')}</div>`;
-          content.appendChild(daySection);
+          weekDiv.appendChild(header);
+          weekDiv.appendChild(content);
+          historyList.appendChild(weekDiv);
         });
-
-        weekDiv.appendChild(header);
-        weekDiv.appendChild(content);
-        historyList.appendChild(weekDiv);
       });
+    });
+  }
+
+  function exportFullHistoryCSV() {
+    setSyncUI(true);
+    db.ref('days').once('value').then(snap => {
+      const data = snap.val() || {};
+      const rows = [["Date", "Type", "Event", "Time", "Logged By"]];
+      const sortedDates = Object.keys(data).sort().reverse();
+      
+      sortedDates.forEach(date => {
+        const day = data[date];
+        Object.entries(day).forEach(([key, val]) => {
+          if (key !== "Walks" && typeof val === 'string' && val.includes('✔')) {
+            const timePart = val.split('✔ ')[1] || "";
+            const time = timePart.split(' (')[0] || "";
+            const user = timePart.split(' (')[1]?.replace(')', '') || "";
+            rows.push([date, "Routine", key, time, user]);
+          }
+        });
+        if (day.Walks) {
+          try {
+            JSON.parse(day.Walks).forEach(w => { rows.push([date, "Walk", w.note, w.time, w.name]); });
+          } catch(e) {}
+        }
+      });
+
+      const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+      const link = document.createElement("a");
+      link.setAttribute("href", encodeURI(csvContent));
+      link.setAttribute("download", `dog_duty_full_export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setSyncUI(false);
     });
   }
 
