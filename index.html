@@ -65,6 +65,7 @@
     input:checked + .slider:before { transform: translateX(26px); }
 
     .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+    .helper-text { font-size: 13px; color: #aaa; margin-bottom: 10px; text-align: center; font-style: italic; }
     .version-label { text-align: center; margin-top: 40px; opacity: 0.5; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; padding: 10px; }
     .leaderboard-row { display: flex; justify-content: space-between; padding: 12px; background: #2c2c2c; border-radius: 12px; margin-bottom: 8px; font-weight: bold; }
   </style>
@@ -125,9 +126,10 @@
   <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
     <h2>Edit Routines</h2>
     <div id="routineSettingsList" style="text-align:left; margin-bottom:15px;"></div>
+    <div class="helper-text">Add task below. Use emoji keyboard for icon!</div>
     <div class="input-group">
-      <input type="text" id="newRoutineEmoji" placeholder="🐾" maxlength="2" style="width:60px; padding:15px; border-radius:10px; border:none; background:#333; color:white;">
-      <input type="text" id="newRoutineName" placeholder="Task Name" style="flex-grow:1; padding:15px; border-radius:10px; border:none; background:#333; color:white;">
+      <input type="text" id="newRoutineEmoji" placeholder="🐾" maxlength="2" style="width:60px; padding:15px; border-radius:10px; border:none; background:#333; color:white; text-align:center; font-size:24px; min-height:54px;">
+      <input type="text" id="newRoutineName" placeholder="Task Name" style="flex-grow:1; padding:15px; border-radius:10px; border:none; background:#333; color:white; font-size:16px; min-height:54px;">
     </div>
     <button class="action-btn" onclick="addRoutine()">＋ Add New Task</button>
     <button class="action-btn secondary" onclick="closeManageRoutineModal()">Close</button>
@@ -165,10 +167,11 @@
   <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
     <h2>Edit Supply List</h2>
     <div id="supplyEditList" style="text-align:left; margin-bottom:15px;"></div>
+    <div class="helper-text">Add item below. Use emoji keyboard for icon!</div>
     <div class="input-group">
-      <input type="text" id="newSupplyEmoji" maxlength="2" 
+      <input type="text" id="newSupplyEmoji" placeholder="🐾" maxlength="2" 
          style="width:60px; padding:15px; border-radius:10px; border:none; background:#333; color:white; text-align:center; font-size:24px; min-height:54px;">
-      <input type="text" id="newSupplyName" 
+      <input type="text" id="newSupplyName" placeholder="Supply Name" 
          style="flex-grow:1; padding:15px; border-radius:10px; border:none; background:#333; color:white; font-size:16px; min-height:54px;">
     </div>
     <button class="action-btn" onclick="addSupplyItem()">＋ Add New Item</button>
@@ -191,7 +194,7 @@
   /**
    * SECTION 1: CONFIGURATION & GLOBAL STATE
    */
-  const APP_VERSION = "Version 1.5.1";
+  const APP_VERSION = "Version 1.5.2";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBaIQVgPLcCj4T8-wvZ90L9iKSJHZ_7Srg",
@@ -399,8 +402,14 @@
     }
   }
 
+  function deleteRoutineItem(name) {
+    if(confirm(`Remove "${name}" from routines?`)) {
+      const newList = currentRoutines.filter(r => r.name !== name);
+      db.ref('settings/routines').set(newList);
+    }
+  }
+
   function confirmDeleteWalk() { if (confirm("Delete walk?")) { db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(activeWalks.filter(w => w.id != editingWalkId))).then(() => closeWalkModal()); } }
-  function removeRoutine(name) { if(confirm(`Remove "${name}"?`)) { db.ref('settings/routines').set(currentRoutines.filter(r => r.name !== name)).then(() => openManageRoutineModal()); } }
 
   /**
    * SECTION 5: MODAL CONTROLS
@@ -426,7 +435,19 @@
   function closeSupplyModal() { document.getElementById('supplyModal').style.display = 'none'; }
   function openManageSupplyModal() { document.getElementById('manageSupplyModal').style.display = 'flex'; }
   function closeManageSupplyModal() { document.getElementById('manageSupplyModal').style.display = 'none'; }
-  function openManageRoutineModal() { document.getElementById('manageRoutineModal').style.display = 'flex'; }
+  
+  function openManageRoutineModal() {
+    const list = document.getElementById('routineSettingsList');
+    list.innerHTML = '';
+    currentRoutines.forEach(r => {
+      const div = document.createElement('div');
+      div.style.cssText = "display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333; align-items:center;";
+      div.innerHTML = `<span>${r.emoji} ${r.name}</span><button onclick="deleteRoutineItem('${r.name}')" style="background:#b71c1c; border:none; color:white; border-radius:5px; padding:5px 10px;">Delete</button>`;
+      list.appendChild(div);
+    });
+    document.getElementById('manageRoutineModal').style.display = 'flex';
+  }
+  
   function closeManageRoutineModal() { document.getElementById('manageRoutineModal').style.display = 'none'; }
   function openHistoryModal() { document.getElementById('historyModal').style.display = 'flex'; loadHistory(); }
   function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
@@ -535,7 +556,13 @@
   function setSyncUI(s) { document.getElementById('syncStatus').classList.toggle('visible', s); }
   function handleGoogleLogin() { auth.signInWithPopup(provider); }
   function confirmSignOut() { if(confirm("Sign out?")) auth.signOut().then(() => window.location.reload()); }
+  function convertTo24(timeStr) {
+    const [time, period] = timeStr.split(' ');
+    let [h, m] = time.split(':');
+    if (period === 'PM' && h !== '12') h = parseInt(h) + 12;
+    if (period === 'AM' && h === '12') h = '00';
+    return `${h.toString().padStart(2, '0')}:${m}`;
+  }
 </script>
 </body>
 </html>
-
