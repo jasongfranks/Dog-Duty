@@ -194,7 +194,7 @@
   /**
    * SECTION 1: CONFIGURATION & GLOBAL STATE
    */
-  const APP_VERSION = "Version 1.5.2";
+  const APP_VERSION = "Version 1.5.3";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBaIQVgPLcCj4T8-wvZ90L9iKSJHZ_7Srg",
@@ -311,7 +311,19 @@
     const wContainer = document.getElementById('walkList');
     wContainer.innerHTML = '';
     try { activeWalks = walksJson ? JSON.parse(walksJson) : []; } catch(e) { activeWalks = []; }
-    activeWalks.sort((a,b) => a.time.localeCompare(b.time));
+    
+    // THE FIX: Sorting walks chronologically by time
+    activeWalks.sort((a, b) => {
+        const getMinutes = (timeStr) => {
+            const [time, period] = timeStr.split(' ');
+            let [h, m] = time.split(':').map(Number);
+            if (period === 'PM' && h !== 12) h += 12;
+            if (period === 'AM' && h === 12) h = 0;
+            return h * 60 + m;
+        };
+        return getMinutes(a.time) - getMinutes(b.time);
+    });
+
     if(activeWalks.length === 0) { wContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#555;">No walks today</div>'; return; }
     activeWalks.forEach(w => {
       const btn = document.createElement('button');
@@ -405,7 +417,9 @@
   function deleteRoutineItem(name) {
     if(confirm(`Remove "${name}" from routines?`)) {
       const newList = currentRoutines.filter(r => r.name !== name);
-      db.ref('settings/routines').set(newList);
+      db.ref('settings/routines').set(newList).then(() => {
+          openManageRoutineModal();
+      });
     }
   }
 
@@ -417,10 +431,7 @@
   function openWalkModal(w = null) {
     editingWalkId = w ? w.id : null;
     if (w) {
-      const [t, m] = w.time.split(' '); let [h, min] = t.split(':');
-      if (m === 'PM' && h !== '12') h = parseInt(h) + 12;
-      if (m === 'AM' && h === '12') h = '00';
-      document.getElementById('walkTimeInput').value = `${h.toString().padStart(2,'0')}:${min}`;
+      document.getElementById('walkTimeInput').value = convertTo24(w.time);
     } else {
       const now = new Date();
       document.getElementById('walkTimeInput').value = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
