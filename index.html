@@ -29,6 +29,7 @@
     #syncStatus { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #4fc3f7; opacity: 0; transition: opacity 0.3s; }
     #syncStatus.visible { opacity: 1; }
     
+    .header-controls { display: flex; gap: 8px; }
     .icon-btn { background: #333; padding: 8px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; color: #fff; cursor: pointer; border: none; display: flex; align-items: center; gap: 6px; }
     .list-container { display: flex; flex-direction: column; gap: 12px; }
     .section-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; margin: 15px 0 5px 5px; }
@@ -66,6 +67,8 @@
     .helper-text { font-size: 13px; color: #aaa; margin: 0; padding: 12px 0 15px 0; line-height: 1.4; text-align: center; }
 
     .version-label { text-align: center; margin-top: 40px; opacity: 0.5; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; padding: 10px; }
+
+    .leaderboard-row { display: flex; justify-content: space-between; padding: 12px; background: #2c2c2c; border-radius: 12px; margin-bottom: 8px; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -80,6 +83,7 @@
       <span id="syncStatus">Syncing...</span>
     </div>
     <div class="header-controls">
+      <div class="icon-btn" onclick="openLeaderboardModal()">🏆</div>
       <div class="icon-btn" onclick="confirmSignOut()">👤 <span id="userNameDisplay">...</span></div>
     </div>
   </header>
@@ -99,7 +103,7 @@
     <button class="action-btn secondary" style="background:#455a64; margin-top:10px;" onclick="openHistoryModal()">📅 View History</button>
   </div>
 
-  <div class="version-label" onclick="window.location.reload(true)">Version 1.3.0</div>
+  <div class="version-label" id="versionDisplay" onclick="window.location.reload(true)"></div>
 </main>
 
 <div id="loginModal" class="modal" style="display:flex;">
@@ -107,6 +111,15 @@
     <img src="dogdutyicon.png" style="height:100px; width:100px; margin-bottom:20px; border-radius:20px;">
     <h2>Family Access</h2>
     <button class="action-btn" onclick="handleGoogleLogin()" style="background:#4285F4; display:flex; align-items:center; justify-content:center; gap:10px; width:100%;">Sign in with Google</button>
+  </div>
+</div>
+
+<div id="leaderboardModal" class="modal">
+  <div class="modal-content">
+    <h2>Leaderboard</h2>
+    <p style="font-size: 12px; color: #888; margin-bottom: 20px;">Tasks & Walks (Last 7 Days)</p>
+    <div id="leaderboardList" style="text-align: left;"></div>
+    <button class="action-btn secondary" style="margin-top:20px;" onclick="closeLeaderboardModal()">Close</button>
   </div>
 </div>
 
@@ -168,6 +181,9 @@
 </div>
 
 <script>
+  // --- VERSION CONTROL ---
+  const APP_VERSION = "Version 1.3.1";
+
   const firebaseConfig = {
     apiKey: "AIzaSyBaIQVgPLcCj4T8-wvZ90L9iKSJHZ_7Srg",
     authDomain: "dog-duty-fe307.firebaseapp.com",
@@ -197,12 +213,14 @@
   let currentRoutines = [];
   let editingWalkId = null;
 
+  // Set the version number on load
+  document.getElementById('versionDisplay').textContent = APP_VERSION;
+
   auth.onAuthStateChanged(user => {
     if (user) {
       const email = user.email.toLowerCase();
       const safeEmail = email.replace(/\./g, ',');
       
-      // Check the database allowlist
       db.ref(`allowlist/${safeEmail}`).once('value').then(snap => {
         if (snap.exists()) {
           userFirstName = user.displayName ? user.displayName.split(' ')[0] : "User";
@@ -316,6 +334,48 @@
   function confirmDeleteWalk() { if (confirm("Delete walk?")) { const filtered = activeWalks.filter(w => w.id != editingWalkId); db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(filtered)).then(() => closeWalkModal()); } }
   function openWalkModal(w = null) { editingWalkId = w ? w.id : null; if (w) { const [t, m] = w.time.split(' '); let [h, min] = t.split(':'); if (m === 'PM' && h !== '12') h = parseInt(h) + 12; if (m === 'AM' && h === '12') h = '00'; document.getElementById('walkTimeInput').value = `${h.toString().padStart(2,'0')}:${min}`; } else { const now = new Date(); document.getElementById('walkTimeInput').value = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0'); } document.getElementById('walkModal').style.display = 'flex'; document.getElementById('editSaveArea').style.display = w ? 'block' : 'none'; document.getElementById('editWalkControls').style.display = w ? 'block' : 'none'; document.getElementById('walkModalTitle').textContent = w ? "Edit Walk" : "Log Walk"; }
   function closeWalkModal() { document.getElementById('walkModal').style.display = 'none'; }
+  
+  function openLeaderboardModal() {
+    const list = document.getElementById('leaderboardList');
+    list.innerHTML = '<p style="text-align:center; opacity:0.5;">Calculating points...</p>';
+    document.getElementById('leaderboardModal').style.display = 'flex';
+    
+    db.ref('days').limitToLast(7).once('value', snapshot => {
+      const data = snapshot.val() || {};
+      const scores = {};
+      
+      Object.values(data).forEach(day => {
+        // Count Routine Tasks
+        Object.entries(day).forEach(([key, val]) => {
+          if (key !== "Walks" && typeof val === 'string' && val.includes('(')) {
+            const name = val.split('(')[1].replace(')', '');
+            scores[name] = (scores[name] || 0) + 1;
+          }
+        });
+        // Count Walks
+        if (day.Walks) {
+          try {
+            JSON.parse(day.Walks).forEach(w => {
+              scores[w.name] = (scores[w.name] || 0) + 1;
+            });
+          } catch(e) {}
+        }
+      });
+
+      const sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]);
+      list.innerHTML = sorted.length ? '' : '<p style="text-align:center; opacity:0.5;">No activity yet.</p>';
+      
+      sorted.forEach(([name, score], index) => {
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '👤';
+        const div = document.createElement('div');
+        div.className = 'leaderboard-row';
+        div.innerHTML = `<span>${medal} ${name}</span><span>${score} pts</span>`;
+        list.appendChild(div);
+      });
+    });
+  }
+  function closeLeaderboardModal() { document.getElementById('leaderboardModal').style.display = 'none'; }
+
   function openManageRoutineModal() {
     const list = document.getElementById('routineSettingsList');
     list.innerHTML = '';
@@ -340,8 +400,6 @@
     }
   }
   function removeRoutine(name) { if(confirm(`Remove "${name}" permanently?`)) { const newList = currentRoutines.filter(r => r.name !== name); db.ref('settings/routines').set(newList).then(() => openManageRoutineModal()); } }
-  
-  // MODAL FIX: Added explicit input clearing on close
   function closeManageRoutineModal() { 
     document.getElementById('manageRoutineModal').style.display = 'none'; 
     document.getElementById('newRoutineName').value = '';
