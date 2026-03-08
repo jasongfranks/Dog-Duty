@@ -152,16 +152,25 @@
 
 <div id="supplyModal" class="modal">
   <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
-    <h2>Supplies</h2>
-    <div id="supplyListContainer"></div>
-    <div style="border-top: 1px solid #333; margin-top: 20px; padding-top: 20px;">
-      <div class="input-group">
-        <input type="text" id="newSupplyEmoji" placeholder="📦" maxlength="2" style="width:60px; padding:15px; border-radius:10px; border:none; background:#333; color:white;">
-        <input type="text" id="newSupplyName" placeholder="Item Name" style="flex-grow:1; padding:15px; border-radius:10px; border:none; background:#333; color:white;">
-      </div>
-      <button class="action-btn" onclick="addSupplyItem()">＋ Add New Supply</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+      <h2 style="margin:0;">Supplies</h2>
+      <span style="font-size:12px; color:#0277bd; cursor:pointer;" onclick="openManageSupplyModal()">⚙️ Edit List</span>
     </div>
-    <button class="action-btn secondary" style="margin-top:10px;" onclick="closeSupplyModal()">Close</button>
+    <div id="supplyListContainer"></div>
+    <button class="action-btn secondary" style="margin-top:20px;" onclick="closeSupplyModal()">Close</button>
+  </div>
+</div>
+
+<div id="manageSupplyModal" class="modal">
+  <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+    <h2>Edit Supply List</h2>
+    <div id="supplyEditList" style="text-align:left; margin-bottom:15px;"></div>
+    <div class="input-group">
+      <input type="text" id="newSupplyEmoji" placeholder="📦" maxlength="2" style="width:60px; padding:15px; border-radius:10px; border:none; background:#333; color:white;">
+      <input type="text" id="newSupplyName" placeholder="Item Name" style="flex-grow:1; padding:15px; border-radius:10px; border:none; background:#333; color:white;">
+    </div>
+    <button class="action-btn" onclick="addSupplyItem()">＋ Add New Item</button>
+    <button class="action-btn secondary" onclick="closeManageSupplyModal()">Back</button>
   </div>
 </div>
 
@@ -180,7 +189,7 @@
   /**
    * SECTION 1: CONFIGURATION & GLOBAL STATE
    */
-  const APP_VERSION = "Version 1.5.0";
+  const APP_VERSION = "Version 1.5.1";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBaIQVgPLcCj4T8-wvZ90L9iKSJHZ_7Srg",
@@ -197,7 +206,6 @@
   const db = firebase.database();
   const auth = firebase.auth();
   const provider = new firebase.auth.GoogleAuthProvider();
-  // INDUSTRY STANDARD: Force account selection popup
   provider.setCustomParameters({ prompt: 'select_account' });
 
   let userFirstName = "";
@@ -214,7 +222,6 @@
    */
   auth.onAuthStateChanged(user => {
     if (user) {
-      // INDUSTRY STANDARD: Validate against UID instead of email string
       db.ref(`allowlist/${user.uid}`).once('value').then(snap => {
         if (snap.exists()) {
           userFirstName = user.displayName ? user.displayName.split(' ')[0] : "User";
@@ -249,7 +256,6 @@
   }
 
   function init() {
-    // Listen for Routines
     db.ref('settings/routines').on('value', snap => {
       currentRoutines = snap.val() || [
         {name: 'Breakfast', emoji: '🥣'}, {name: 'Blinds', emoji: '🪟'}, 
@@ -262,14 +268,15 @@
       });
     });
 
-    // Listen for Dynamic Supplies
     db.ref('settings/supplyList').on('value', snap => {
       currentSupplies = snap.val() || [
         {name: 'Food', emoji: '🥫'}, {name: 'Meds', emoji: '💊'}, {name: 'Treats', emoji: '🦴'}
       ];
       db.ref('supplies').on('value', snapshot => {
-        renderSupplyList(snapshot.val() || {});
-        handleSupplyBanner(snapshot.val() || {});
+        const currentStatus = snapshot.val() || {};
+        renderSupplyToggles(currentStatus);
+        renderSupplyEditList();
+        handleSupplyBanner(currentStatus);
       });
     });
   }
@@ -310,23 +317,31 @@
     });
   }
 
-  function renderSupplyList(supplyStatus) {
+  function renderSupplyToggles(supplyStatus) {
     const container = document.getElementById('supplyListContainer');
     container.innerHTML = '';
     currentSupplies.forEach(item => {
       const row = document.createElement('div');
       row.className = 'supply-row';
       row.innerHTML = `
-        <div style="display:flex; align-items:center; gap:10px;">
-          <span style="cursor:pointer;" onclick="deleteSupplyItem('${item.name}')">🗑️</span>
-          <span>${item.emoji} ${item.name}</span>
-        </div>
+        <span>${item.emoji} ${item.name}</span>
         <label class="switch">
           <input type="checkbox" id="check_${item.name}" ${supplyStatus[item.name] ? 'checked' : ''} onchange="toggleSupply('${item.name}')">
           <span class="slider"></span>
         </label>
       `;
       container.appendChild(row);
+    });
+  }
+
+  function renderSupplyEditList() {
+    const container = document.getElementById('supplyEditList');
+    container.innerHTML = '';
+    currentSupplies.forEach(item => {
+      const div = document.createElement('div');
+      div.style.cssText = "display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333; align-items:center;";
+      div.innerHTML = `<span>${item.emoji} ${item.name}</span><button onclick="deleteSupplyItem('${item.name}')" style="background:#b71c1c; border:none; color:white; border-radius:5px; padding:5px 10px;">Delete</button>`;
+      container.appendChild(div);
     });
   }
 
@@ -382,6 +397,9 @@
     }
   }
 
+  function confirmDeleteWalk() { if (confirm("Delete walk?")) { db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(activeWalks.filter(w => w.id != editingWalkId))).then(() => closeWalkModal()); } }
+  function removeRoutine(name) { if(confirm(`Remove "${name}"?`)) { db.ref('settings/routines').set(currentRoutines.filter(r => r.name !== name)).then(() => openManageRoutineModal()); } }
+
   /**
    * SECTION 5: MODAL CONTROLS
    */
@@ -404,6 +422,8 @@
   function closeWalkModal() { document.getElementById('walkModal').style.display = 'none'; }
   function openSupplyModal() { document.getElementById('supplyModal').style.display = 'flex'; }
   function closeSupplyModal() { document.getElementById('supplyModal').style.display = 'none'; }
+  function openManageSupplyModal() { document.getElementById('manageSupplyModal').style.display = 'flex'; }
+  function closeManageSupplyModal() { document.getElementById('manageSupplyModal').style.display = 'none'; }
   function openManageRoutineModal() { document.getElementById('manageRoutineModal').style.display = 'flex'; }
   function closeManageRoutineModal() { document.getElementById('manageRoutineModal').style.display = 'none'; }
   function openHistoryModal() { document.getElementById('historyModal').style.display = 'flex'; loadHistory(); }
