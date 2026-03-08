@@ -166,8 +166,10 @@
     <h2>Edit Supply List</h2>
     <div id="supplyEditList" style="text-align:left; margin-bottom:15px;"></div>
     <div class="input-group">
-      <input type="text" id="newSupplyEmoji" placeholder="📦" maxlength="2" style="width:60px; padding:15px; border-radius:10px; border:none; background:#333; color:white;">
-      <input type="text" id="newSupplyName" placeholder="Item Name" style="flex-grow:1; padding:15px; border-radius:10px; border:none; background:#333; color:white;">
+      <input type="text" id="newSupplyEmoji" maxlength="2" 
+         style="width:60px; padding:15px; border-radius:10px; border:none; background:#333; color:white; text-align:center; font-size:24px; min-height:54px;">
+      <input type="text" id="newSupplyName" 
+         style="flex-grow:1; padding:15px; border-radius:10px; border:none; background:#333; color:white; font-size:16px; min-height:54px;">
     </div>
     <button class="action-btn" onclick="addSupplyItem()">＋ Add New Item</button>
     <button class="action-btn secondary" onclick="closeManageSupplyModal()">Back</button>
@@ -536,3 +538,4 @@
 </script>
 </body>
 </html>
+
