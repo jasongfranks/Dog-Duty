@@ -39,24 +39,19 @@
 
     .walk-content { display: grid; grid-template-columns: auto 1fr auto; align-items: center; width: 100%; gap: 12px; }
     .walk-left { text-align: left; font-size: 18px; white-space: nowrap; }
-    .walk-center { text-align: left; font-size: 20px; line-height: 1.2; }
+    .walk-center { text-align: left; font-size: 24px; }
     .walk-right { text-align: right; white-space: nowrap; }
 
     .add-walk-btn { width: 100%; background: #0277bd; color: white; border: none; padding: 18px; border-radius: 18px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); }
-    .modal-content { background: #1e1e1e; padding: 25px; border-radius: 24px; text-align: center; width: 92%; max-width: 400px; border: 1px solid #333; max-height: 90vh; overflow-y: auto; }
+    .modal-content { background: #1e1e1e; padding: 25px; border-radius: 24px; text-align: center; width: 92%; max-width: 400px; border: 1px solid #333; }
     
     .action-btn { display: block; width: 100%; padding: 16px; font-size: 18px; border-radius: 14px; border: none; background: #2e7d32; color: white; margin-bottom: 10px; cursor: pointer; font-weight: bold; }
     .action-btn.secondary { background: #333; color: #ccc; }
     
-    input[type="time"], input[type="text"], select { 
-      width: 100%; display: block; margin-bottom: 15px; padding: 12px; font-size: 16px; border-radius: 10px; border: 2px solid #444; background: #222; color: white;
+    input[type="time"] { 
+      width: 100%; display: block; margin: 0 auto 15px auto; padding: 15px; font-size: 28px; border-radius: 14px; border: 2px solid #444; background: #222; color: white; text-align: center; -webkit-appearance: none;
     }
-    input[type="time"] { font-size: 28px; text-align: center; }
-
-    .bristol-group { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-bottom: 15px; }
-    .bristol-btn { background: #333; border: 1px solid #444; color: white; width: 35px; height: 35px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-    .bristol-btn.selected { background: #795548; border-color: #d7ccc8; }
 
     .supply-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 10px; border-bottom: 1px solid #333; }
     .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
@@ -66,7 +61,13 @@
     input:checked + .slider { background-color: #d32f2f; }
     input:checked + .slider:before { transform: translateX(26px); }
 
+    .routine-input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+    #newRoutineEmoji { width: 60px; text-align: center; font-size: 24px; }
+    
+    .helper-text { font-size: 13px; color: #aaa; margin: 0; padding: 12px 0 15px 0; line-height: 1.4; text-align: center; }
+
     .version-label { text-align: center; margin-top: 40px; opacity: 0.5; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; padding: 10px; }
+
     .leaderboard-row { display: flex; justify-content: space-between; padding: 12px; background: #2c2c2c; border-radius: 12px; margin-bottom: 8px; font-weight: bold; }
   </style>
 </head>
@@ -127,10 +128,13 @@
     <h2>Manage Routines</h2>
     <div id="routineSettingsList" style="text-align:left; margin-bottom:0;"></div>
     <div style="padding: 0;">
-      <div class="helper-text">Add task below. Use emoji keyboard for icon!</div>
-      <div class="routine-input-group" style="display:flex; gap:10px; margin-bottom:15px;">
-        <input type="text" id="newRoutineEmoji" placeholder="🐾" maxlength="2" style="width:60px; text-align:center;">
-        <input type="text" id="newRoutineName" placeholder="Task Name" style="flex-grow:1;">
+      <div class="helper-text">
+        Add a task below. Tap the square to use your phone's <b>Emoji Keyboard</b> for an icon! <br>
+        <i>Example: 🪥 Brush Teeth</i>
+      </div>
+      <div class="routine-input-group">
+        <input type="text" id="newRoutineEmoji" placeholder="🐾" maxlength="2" style="padding:15px; border-radius:10px; border:none; background:#333; color:white;">
+        <input type="text" id="newRoutineName" placeholder="Task Name" style="flex-grow:1; padding:15px; border-radius:10px; border:none; background:#333; color:white;">
       </div>
       <button class="action-btn" onclick="addRoutine()">＋ Add New Task</button>
       <button class="action-btn secondary" onclick="closeManageRoutineModal()">Close</button>
@@ -142,33 +146,13 @@
   <div class="modal-content">
     <h2 id="walkModalTitle">Log Walk</h2>
     <input type="time" id="walkTimeInput">
-    
-    <div style="margin-bottom: 15px;">
-        <label style="font-size: 12px; color: #888; display: block; margin-bottom: 5px;">💩 Bristol Stool Type (1-7) 
-            <a href="https://en.wikipedia.org/wiki/Bristol_stool_scale#/media/File:BristolStoolChart.png" target="_blank" style="color:#0277bd; text-decoration:none;">[Guide]</a>
-        </label>
-        <div class="bristol-group" id="bristolContainer">
-            <button class="bristol-btn" onclick="selectBristol(1)">1</button>
-            <button class="bristol-btn" onclick="selectBristol(2)">2</button>
-            <button class="bristol-btn" onclick="selectBristol(3)">3</button>
-            <button class="bristol-btn" onclick="selectBristol(4)">4</button>
-            <button class="bristol-btn" onclick="selectBristol(5)">5</button>
-            <button class="bristol-btn" onclick="selectBristol(6)">6</button>
-            <button class="bristol-btn" onclick="selectBristol(7)">7</button>
-        </div>
-    </div>
-
-    <input type="text" id="walkNoteInput" placeholder="Add a note (e.g. met a friend)">
-
-    <div id="editSaveArea" style="display:none; margin-bottom:15px;"><button class="action-btn" style="background:#0277bd;" onclick="saveWalk(null)">💾 Save Changes</button></div>
-    
-    <div id="quickActions" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+    <div id="editSaveArea" style="display:none; margin-bottom:15px;"><button class="action-btn" style="background:#0277bd;" onclick="saveWalk(null)">💾 Save Time Change</button></div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
       <button class="action-btn" onclick="saveWalk('pee')">💦 Pee</button>
       <button class="action-btn" onclick="saveWalk('poop')">💩 Poop</button>
       <button class="action-btn" style="grid-column: span 2;" onclick="saveWalk('both')">💦💩 Both</button>
       <button class="action-btn secondary" style="grid-column: span 2; background:#5d4037; color:white;" onclick="saveWalk('backyard')">🏡 Backyard</button>
     </div>
-    
     <div id="editWalkControls" style="display:none; border-top:1px solid #333; padding-top:10px; margin-top:10px;"><button class="action-btn" style="background:#b71c1c;" onclick="confirmDeleteWalk()">🗑️ Delete Walk</button></div>
     <button class="action-btn secondary" style="margin-top:10px;" onclick="closeWalkModal()">Cancel</button>
   </div>
@@ -198,7 +182,7 @@
 
 <script>
   // --- VERSION CONTROL ---
-  const APP_VERSION = "Version 1.3.1";
+  const APP_VERSION = "Version 1.3.0";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBaIQVgPLcCj4T8-wvZ90L9iKSJHZ_7Srg",
@@ -216,6 +200,7 @@
   const auth = firebase.auth();
   const provider = new firebase.auth.GoogleAuthProvider();
 
+  // LOCAL TIME FIX
   function getLocalToday() {
     const now = new Date();
     const offset = now.getTimezoneOffset() * 60000;
@@ -227,14 +212,15 @@
   let activeWalks = [];
   let currentRoutines = [];
   let editingWalkId = null;
-  let selectedBristol = null;
 
+  // Set the version number on load
   document.getElementById('versionDisplay').textContent = APP_VERSION;
 
   auth.onAuthStateChanged(user => {
     if (user) {
       const email = user.email.toLowerCase();
       const safeEmail = email.replace(/\./g, ',');
+      
       db.ref(`allowlist/${safeEmail}`).once('value').then(snap => {
         if (snap.exists()) {
           userFirstName = user.displayName ? user.displayName.split(' ')[0] : "User";
@@ -243,9 +229,12 @@
           document.getElementById('userNameDisplay').textContent = userFirstName;
           init();
         } else {
-          alert("Access Denied.");
+          alert("Access Denied: Email not on allowlist.");
           auth.signOut();
         }
+      }).catch(() => {
+        alert("Security Error: Access Denied.");
+        auth.signOut();
       });
     } else {
       document.getElementById('loginModal').style.display = 'flex';
@@ -279,7 +268,7 @@
       btn.className = `task-btn ${val ? 'done' : ''}`;
       btn.innerHTML = `<span>${r.emoji} ${r.name}</span><small style="opacity:0.7">${val || ''}</small>`;
       btn.onclick = () => {
-        if (val && !confirm(`Uncheck "${r.name}"?`)) return;
+        if (val && !confirm(`Are you sure you want to uncheck "${r.name}"?`)) return;
         setSyncUI(true);
         const timeStr = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         const newVal = val ? null : `✔ ${timeStr} (${userFirstName})`;
@@ -323,24 +312,9 @@
     activeWalks.forEach(w => {
       const btn = document.createElement('button');
       btn.className = `task-btn done`;
-      const stoolInfo = w.bristol ? `<span style="font-size:12px; display:block; opacity:0.8;">Bristol Type ${w.bristol}</span>` : '';
-      const noteInfo = w.customNote ? `<span style="font-size:12px; display:block; font-style:italic; opacity:0.9; color:#ffeb3b;">"${w.customNote}"</span>` : '';
-      btn.innerHTML = `
-        <div class="walk-content">
-          <div class="walk-left">${getTimeEmoji(w.time)} Walk</div>
-          <div class="walk-center">${w.note}${stoolInfo}${noteInfo}</div>
-          <div class="walk-right"><small style="opacity:0.7">✔ ${w.time} (${w.name})</small></div>
-        </div>`;
+      btn.innerHTML = `<div class="walk-content"><div class="walk-left">${getTimeEmoji(w.time)} Walk</div><div class="walk-center">${w.note}</div><div class="walk-right"><small style="opacity:0.7">✔ ${w.time} (${w.name})</small></div></div>`;
       btn.onclick = () => openWalkModal(w);
       wContainer.appendChild(btn);
-    });
-  }
-
-  function selectBristol(num) {
-    selectedBristol = (selectedBristol === num) ? null : num;
-    document.querySelectorAll('.bristol-btn').forEach(btn => {
-        btn.classList.remove('selected');
-        if (btn.innerText == selectedBristol) btn.classList.add('selected');
     });
   }
 
@@ -349,76 +323,48 @@
     const rawTime = document.getElementById('walkTimeInput').value;
     const [h, m] = rawTime.split(':');
     const finalTime = `${((h % 12) || 12)}:${m} ${h >= 12 ? 'PM' : 'AM'}`;
-    const customNote = document.getElementById('walkNoteInput').value.trim();
-    
     const emojiMap = {'pee':'💦','poop':'💩','both':'💦💩','backyard':'🏡'};
     const emoji = subAction ? emojiMap[subAction] : (editingWalkId ? activeWalks.find(x => x.id === editingWalkId).note : '🚶');
-    
     let newWalks = [...activeWalks];
-    const walkObj = { 
-        id: editingWalkId || Date.now(), 
-        time: finalTime, 
-        name: editingWalkId ? activeWalks.find(x => x.id === editingWalkId).name : userFirstName, 
-        note: emoji,
-        bristol: selectedBristol,
-        customNote: customNote
-    };
-
-    if(editingWalkId) newWalks = newWalks.map(w => w.id == editingWalkId ? walkObj : w);
-    else newWalks.push(walkObj);
-
-    db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(newWalks)).then(() => { 
-        setSyncUI(false); 
-        closeWalkModal(); 
-    });
+    if(editingWalkId) newWalks = newWalks.map(w => w.id == editingWalkId ? {...w, time: finalTime, note: emoji} : w);
+    else newWalks.push({ id: Date.now(), time: finalTime, name: userFirstName, note: emoji });
+    db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(newWalks)).then(() => { setSyncUI(false); closeWalkModal(); });
   }
 
-  function openWalkModal(w = null) { 
-    editingWalkId = w ? w.id : null;
-    selectedBristol = w ? w.bristol : null;
-    document.getElementById('walkNoteInput').value = w ? (w.customNote || '') : '';
-    
-    selectBristol(selectedBristol); // Sync UI buttons
-
-    if (w) {
-        const [t, m] = w.time.split(' ');
-        let [h, min] = t.split(':');
-        if (m === 'PM' && h !== '12') h = parseInt(h) + 12;
-        if (m === 'AM' && h === '12') h = '00';
-        document.getElementById('walkTimeInput').value = `${h.toString().padStart(2,'0')}:${min}`;
-    } else {
-        const now = new Date();
-        document.getElementById('walkTimeInput').value = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-    }
-    
-    document.getElementById('walkModal').style.display = 'flex';
-    document.getElementById('editSaveArea').style.display = w ? 'block' : 'none';
-    document.getElementById('quickActions').style.display = w ? 'none' : 'grid';
-    document.getElementById('editWalkControls').style.display = w ? 'block' : 'none';
-    document.getElementById('walkModalTitle').textContent = w ? "Edit Walk" : "Log Walk";
-  }
-
+  function confirmDeleteWalk() { if (confirm("Delete walk?")) { const filtered = activeWalks.filter(w => w.id != editingWalkId); db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(filtered)).then(() => closeWalkModal()); } }
+  function openWalkModal(w = null) { editingWalkId = w ? w.id : null; if (w) { const [t, m] = w.time.split(' '); let [h, min] = t.split(':'); if (m === 'PM' && h !== '12') h = parseInt(h) + 12; if (m === 'AM' && h === '12') h = '00'; document.getElementById('walkTimeInput').value = `${h.toString().padStart(2,'0')}:${min}`; } else { const now = new Date(); document.getElementById('walkTimeInput').value = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0'); } document.getElementById('walkModal').style.display = 'flex'; document.getElementById('editSaveArea').style.display = w ? 'block' : 'none'; document.getElementById('editWalkControls').style.display = w ? 'block' : 'none'; document.getElementById('walkModalTitle').textContent = w ? "Edit Walk" : "Log Walk"; }
   function closeWalkModal() { document.getElementById('walkModal').style.display = 'none'; }
-  function confirmDeleteWalk() { if (confirm("Delete?")) { const filtered = activeWalks.filter(w => w.id != editingWalkId); db.ref(`days/${todayKey}/Walks`).set(JSON.stringify(filtered)).then(() => closeWalkModal()); } }
-
+  
   function openLeaderboardModal() {
     const list = document.getElementById('leaderboardList');
-    list.innerHTML = '<p style="text-align:center; opacity:0.5;">Calculating...</p>';
+    list.innerHTML = '<p style="text-align:center; opacity:0.5;">Calculating points...</p>';
     document.getElementById('leaderboardModal').style.display = 'flex';
+    
     db.ref('days').limitToLast(7).once('value', snapshot => {
       const data = snapshot.val() || {};
       const scores = {};
+      
       Object.values(data).forEach(day => {
+        // Count Routine Tasks
         Object.entries(day).forEach(([key, val]) => {
           if (key !== "Walks" && typeof val === 'string' && val.includes('(')) {
             const name = val.split('(')[1].replace(')', '');
             scores[name] = (scores[name] || 0) + 1;
           }
         });
-        if (day.Walks) { try { JSON.parse(day.Walks).forEach(w => { scores[w.name] = (scores[w.name] || 0) + 1; }); } catch(e) {} }
+        // Count Walks
+        if (day.Walks) {
+          try {
+            JSON.parse(day.Walks).forEach(w => {
+              scores[w.name] = (scores[w.name] || 0) + 1;
+            });
+          } catch(e) {}
+        }
       });
+
       const sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]);
-      list.innerHTML = sorted.length ? '' : '<p style="text-align:center; opacity:0.5;">No activity.</p>';
+      list.innerHTML = sorted.length ? '' : '<p style="text-align:center; opacity:0.5;">No activity yet.</p>';
+      
       sorted.forEach(([name, score], index) => {
         const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '👤';
         const div = document.createElement('div');
@@ -453,26 +399,16 @@
       });
     }
   }
-  function removeRoutine(name) { if(confirm("Remove?")) { const newList = currentRoutines.filter(r => r.name !== name); db.ref('settings/routines').set(newList).then(() => openManageRoutineModal()); } }
+  function removeRoutine(name) { if(confirm(`Remove "${name}" permanently?`)) { const newList = currentRoutines.filter(r => r.name !== name); db.ref('settings/routines').set(newList).then(() => openManageRoutineModal()); } }
   function closeManageRoutineModal() { 
     document.getElementById('manageRoutineModal').style.display = 'none'; 
     document.getElementById('newRoutineName').value = '';
     document.getElementById('newRoutineEmoji').value = '';
   }
-
-  function handleSupplyBanner(items) {
-    const low = []; if(items.Food) low.push('FOOD'); if(items.Meds) low.push('MEDS'); if(items.Treats) low.push('TREATS');
-    const b = document.getElementById('supplyBanner'); if(b) { b.style.display = low.length > 0 ? 'block' : 'none'; b.innerHTML = low.length > 0 ? `⚠️ LOW ${low.join(' & ')} ⚠️` : ''; }
-    ['Food','Meds','Treats'].forEach(s => { const el = document.getElementById('check'+s); if(el) el.checked = !!items[s]; });
-  }
-  function setSyncUI(isSyncing) { const bar = document.getElementById('syncStatus'); if(isSyncing) bar.classList.add('visible'); else bar.classList.remove('visible'); }
-  function openSupplyModal() { document.getElementById('supplyModal').style.display = 'flex'; }
-  function closeSupplyModal() { document.getElementById('supplyModal').style.display = 'none'; }
-  function openHistoryModal() { document.getElementById('historyModal').style.display = 'flex'; loadHistory(7); }
-  function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
+  
   function loadHistory(daysCount) {
     const historyList = document.getElementById('historyList');
-    historyList.innerHTML = '<p style="text-align:center; opacity:0.5;">Fetching...</p>';
+    historyList.innerHTML = '<p style="text-align:center; opacity:0.5;">Fetching records...</p>';
     db.ref('days').limitToLast(daysCount).once('value', snapshot => {
       const allDays = snapshot.val() || {};
       historyList.innerHTML = '';
@@ -486,15 +422,22 @@
         let routines = [];
         currentRoutines.forEach(r => { if(dayData[r.name]) routines.push(`<span style="display:inline-block; background:#1b5e20; padding:2px 8px; border-radius:8px; margin:2px; font-size:11px;">${r.emoji} ${r.name}: ${dayData[r.name].replace('✔ ', '')}</span>`); });
         let walksArr = [];
-        if (dayData.Walks) { try { JSON.parse(dayData.Walks).forEach(w => {
-            const noteText = w.customNote ? ` <small>("${w.customNote}")</small>` : '';
-            walksArr.push(`<div style="font-size:13px; margin-top:5px; color:#ddd;">${w.note}${noteText} ${w.time} <span style="opacity:0.6">(${w.name})</span></div>`);
-        }); } catch(e) {} }
+        if (dayData.Walks) { try { JSON.parse(dayData.Walks).forEach(w => walksArr.push(`<div style="font-size:13px; margin-top:5px; color:#ddd;">${w.note} ${w.time} <span style="opacity:0.6">(${w.name})</span></div>`)); } catch(e) {} }
         daySection.innerHTML = `<div style="font-weight:800; color:#4fc3f7; font-size:14px; margin-bottom:8px;">${dateDisplay}</div><div>${routines.join('')}</div><div style="border-top:1px solid #333; margin-top:5px; padding-top:5px;">${walksArr.join('')}</div>`;
         historyList.appendChild(daySection);
       });
     });
   }
+  function handleSupplyBanner(items) {
+    const low = []; if(items.Food) low.push('FOOD'); if(items.Meds) low.push('MEDS'); if(items.Treats) low.push('TREATS');
+    const b = document.getElementById('supplyBanner'); if(b) { b.style.display = low.length > 0 ? 'block' : 'none'; b.innerHTML = low.length > 0 ? `⚠️ LOW ${low.join(' & ')} ⚠️` : ''; }
+    ['Food','Meds','Treats'].forEach(s => { const el = document.getElementById('check'+s); if(el) el.checked = !!items[s]; });
+  }
+  function setSyncUI(isSyncing) { const bar = document.getElementById('syncStatus'); if(isSyncing) bar.classList.add('visible'); else bar.classList.remove('visible'); }
+  function openSupplyModal() { document.getElementById('supplyModal').style.display = 'flex'; }
+  function closeSupplyModal() { document.getElementById('supplyModal').style.display = 'none'; }
+  function openHistoryModal() { document.getElementById('historyModal').style.display = 'flex'; loadHistory(7); }
+  function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
   function handleGoogleLogin() { auth.signInWithPopup(provider); }
   function confirmSignOut() { if(confirm("Sign out?")) auth.signOut().then(() => window.location.reload()); }
   function setSupplies(item) { db.ref(`supplies/${item}`).set(document.getElementById('check' + item).checked); }
