@@ -99,7 +99,7 @@
     <button class="action-btn secondary" style="background:#455a64; margin-top:10px;" onclick="openHistoryModal()">📅 View History</button>
   </div>
 
-  <div class="version-label" onclick="window.location.reload(true)">Version 1.2.8</div>
+  <div class="version-label" onclick="window.location.reload(true)">Version 1.3.0</div>
 </main>
 
 <div id="loginModal" class="modal" style="display:flex;">
@@ -340,7 +340,14 @@
     }
   }
   function removeRoutine(name) { if(confirm(`Remove "${name}" permanently?`)) { const newList = currentRoutines.filter(r => r.name !== name); db.ref('settings/routines').set(newList).then(() => openManageRoutineModal()); } }
-  function closeManageRoutineModal() { document.getElementById('manageRoutineModal').style.display = 'none'; }
+  
+  // MODAL FIX: Added explicit input clearing on close
+  function closeManageRoutineModal() { 
+    document.getElementById('manageRoutineModal').style.display = 'none'; 
+    document.getElementById('newRoutineName').value = '';
+    document.getElementById('newRoutineEmoji').value = '';
+  }
+  
   function loadHistory(daysCount) {
     const historyList = document.getElementById('historyList');
     historyList.innerHTML = '<p style="text-align:center; opacity:0.5;">Fetching records...</p>';
@@ -379,5 +386,3 @@
 </script>
 </body>
 </html>
-
-
