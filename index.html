@@ -24,15 +24,19 @@
     
     #supplyBanner { display: none; background: #b71c1c; color: white; padding: 14px; text-align: center; font-weight: 800; font-size: 16px; border-bottom: 3px solid #ff5252; text-transform: uppercase; }
     main { padding: 12px; display: none; }
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #333; }
-    .brand-area { display: flex; align-items: center; gap: 10px; }
-    .brand-area img { height: 30px; width: auto; max-width: 120px; border-radius: 4px; }
-    h1 { margin: 0; font-size: 20px; white-space: nowrap; font-weight: 800; letter-spacing: -0.5px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #333; gap: 5px; }
+    .brand-area { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .brand-area img { height: 30px; width: auto; max-width: 100px; border-radius: 4px; }
+    h1 { margin: 0; font-size: 18px; white-space: nowrap; font-weight: 800; letter-spacing: -0.5px; }
     #syncStatus { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #4fc3f7; opacity: 0; transition: opacity 0.3s; }
     #syncStatus.visible { opacity: 1; }
     
-    .header-controls { display: flex; gap: 8px; }
-    .icon-btn { background: #333; padding: 8px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; color: #fff; cursor: pointer; border: none; display: flex; align-items: center; gap: 6px; }
+    .header-controls { display: flex; gap: 5px; justify-content: flex-end; flex: 1; min-width: 0; }
+    .icon-btn { background: #333; padding: 6px 10px; border-radius: 15px; font-weight: bold; font-size: 13px; color: #fff; cursor: pointer; border: none; display: flex; align-items: center; gap: 4px; white-space: nowrap; min-width: 0; }
+    
+    /* Logic to prevent name from pushing UI off screen */
+    #userNameDisplay { max-width: 80px; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: bottom; }
+
     .list-container { display: flex; flex-direction: column; gap: 12px; }
     .section-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; margin: 15px 0 5px 5px; }
     
@@ -194,7 +198,7 @@
   /**
    * SECTION 1: CONFIGURATION & GLOBAL STATE
    */
-  const APP_VERSION = "Version 1.5.3";
+  const APP_VERSION = "Version 1.5.4";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBaIQVgPLcCj4T8-wvZ90L9iKSJHZ_7Srg",
@@ -203,7 +207,7 @@
     projectId: "dog-duty-fe307",
     storageBucket: "dog-duty-fe307.firebasestorage.app",
     messagingSenderId: "864273780235",
-    appId: "1:864273780235:web:42c82e06afa5deadc1c10e",
+    appId: "1:864273780235:web:42c82e0afa5deadc1c10e",
     measurementId: "G-C460E5SS3D"
   };
 
@@ -296,12 +300,14 @@
       const val = dayData[r.name];
       const btn = document.createElement('button');
       btn.className = `task-btn ${val ? 'done' : ''}`;
+      // REMOVED CHECKMARK EMOJI
       btn.innerHTML = `<span>${r.emoji} ${r.name}</span><small style="opacity:0.7">${val || ''}</small>`;
       btn.onclick = () => {
         if (val && !confirm(`Uncheck "${r.name}"?`)) return;
         setSyncUI(true);
         const timeStr = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-        db.ref(`days/${todayKey}/${r.name}`).set(val ? null : `✔ ${timeStr} (${userFirstName})`).then(() => setSyncUI(false));
+        // REMOVED CHECKMARK EMOJI FROM SAVED STRING
+        db.ref(`days/${todayKey}/${r.name}`).set(val ? null : `${timeStr} (${userFirstName})`).then(() => setSyncUI(false));
       };
       rContainer.appendChild(btn);
     });
@@ -312,7 +318,7 @@
     wContainer.innerHTML = '';
     try { activeWalks = walksJson ? JSON.parse(walksJson) : []; } catch(e) { activeWalks = []; }
     
-    // THE FIX: Sorting walks chronologically by time
+    // Sorting walks chronologically by time
     activeWalks.sort((a, b) => {
         const getMinutes = (timeStr) => {
             const [time, period] = timeStr.split(' ');
@@ -328,7 +334,8 @@
     activeWalks.forEach(w => {
       const btn = document.createElement('button');
       btn.className = `task-btn done`;
-      btn.innerHTML = `<div class="walk-content"><div>${getTimeEmoji(w.time)} Walk</div><div style="font-size:24px;">${w.note}</div><div><small>✔ ${w.time} (${w.name})</small></div></div>`;
+      // REMOVED CHECKMARK EMOJI
+      btn.innerHTML = `<div class="walk-content"><div>${getTimeEmoji(w.time)} Walk</div><div style="font-size:24px;">${w.note}</div><div><small>${w.time} (${w.name})</small></div></div>`;
       btn.onclick = () => openWalkModal(w);
       wContainer.appendChild(btn);
     });
@@ -535,6 +542,7 @@
             const data = allDays[dk];
             const sec = document.createElement('div');
             sec.style.cssText = "margin-bottom:10px; padding:10px; background:#252525; border-radius:10px;";
+            // UPDATED PARSING TO HANDLE MISSING CHECKMARK
             let rts = []; Object.entries(data).forEach(([k, v]) => { if(k !== "Walks" && typeof v === 'string') rts.push(`<span style="font-size:11px; margin-right:5px;">${k}: ${v.split(' (')[0]}</span>`); });
             let wks = []; if(data.Walks) JSON.parse(data.Walks).forEach(w => wks.push(`${w.note} ${w.time}`));
             sec.innerHTML = `<div style="color:#4fc3f7; font-size:12px;">${dk}</div><div style="font-size:11px;">${rts.join(' ')}</div><div style="font-size:11px; opacity:0.6;">${wks.join(', ')}</div>`;
@@ -553,7 +561,10 @@
       Object.keys(data).sort().reverse().forEach(date => {
         Object.entries(data[date]).forEach(([k,v]) => {
           if(k === "Walks") { JSON.parse(v).forEach(w => rows.push([date, "Walk", w.note, w.time, w.name])); }
-          else if(typeof v === 'string') { rows.push([date, "Routine", k, v.split(' (')[0].replace('✔ ',''), v.split('(')[1].replace(')','')]); }
+          else if(typeof v === 'string') { 
+              // UPDATED EXPORT PARSING
+              rows.push([date, "Routine", k, v.split(' (')[0], v.split('(')[1].replace(')','')]); 
+          }
         });
       });
       const csv = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
