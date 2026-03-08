@@ -202,14 +202,28 @@
   auth.onAuthStateChanged(user => {
     if (user) {
       const email = user.email.toLowerCase();
-      if (APPROVED_EMAILS.includes(email)) {
-        userFirstName = user.displayName ? user.displayName.split(' ')[0] : "User";
-        document.getElementById('loginModal').style.display = 'none';
-        document.getElementById('appContent').style.display = 'block';
-        document.getElementById('userNameDisplay').textContent = userFirstName;
-        init();
-      } else { auth.signOut(); }
-    } else { document.getElementById('loginModal').style.display = 'flex'; document.getElementById('appContent').style.display = 'none'; }
+      const safeEmail = email.replace(/\./g, ',');
+      
+      // Check the database allowlist
+      db.ref(`allowlist/${safeEmail}`).once('value').then(snap => {
+        if (snap.exists()) {
+          userFirstName = user.displayName ? user.displayName.split(' ')[0] : "User";
+          document.getElementById('loginModal').style.display = 'none';
+          document.getElementById('appContent').style.display = 'block';
+          document.getElementById('userNameDisplay').textContent = userFirstName;
+          init();
+        } else {
+          alert("Access Denied: Email not on allowlist.");
+          auth.signOut();
+        }
+      }).catch(() => {
+        alert("Security Error: Access Denied.");
+        auth.signOut();
+      });
+    } else {
+      document.getElementById('loginModal').style.display = 'flex';
+      document.getElementById('appContent').style.display = 'none';
+    }
   });
 
   function init() {
@@ -367,3 +381,4 @@
 </script>
 </body>
 </html>
+
