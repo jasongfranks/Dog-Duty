@@ -99,7 +99,7 @@
     <button class="action-btn secondary" style="background:#455a64; margin-top:10px;" onclick="openHistoryModal()">📅 View History</button>
   </div>
 
-  <div class="version-label" onclick="window.location.reload(true)">Version 1.2.1</div>
+  <div class="version-label" onclick="window.location.reload(true)">Version 1.2.7</div>
 </main>
 
 <div id="loginModal" class="modal" style="display:flex;">
@@ -186,16 +186,23 @@
   const auth = firebase.auth();
   const provider = new firebase.auth.GoogleAuthProvider();
 
+  // LOCAL TIME FIX
+  function getLocalToday() {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000;
+    return (new Date(now - offset)).toISOString().split('T')[0];
+  }
+  const todayKey = getLocalToday();
+
   let userFirstName = "";
   let activeWalks = [];
   let currentRoutines = [];
   let editingWalkId = null;
-  const todayKey = new Date().toISOString().split('T')[0];
 
   auth.onAuthStateChanged(user => {
     if (user) {
-      const email = user.email.toLowerCase().replace(/\.(?=[^@]*@gmail\.com)/g, "");
-      if (APPROVED_EMAILS.some(e => e.toLowerCase().replace(/\.(?=[^@]*@gmail\.com)/g, "") === email)) {
+      const email = user.email.toLowerCase();
+      if (APPROVED_EMAILS.includes(email)) {
         userFirstName = user.displayName ? user.displayName.split(' ')[0] : "User";
         document.getElementById('loginModal').style.display = 'none';
         document.getElementById('appContent').style.display = 'block';
@@ -231,9 +238,7 @@
       btn.className = `task-btn ${val ? 'done' : ''}`;
       btn.innerHTML = `<span>${r.emoji} ${r.name}</span><small style="opacity:0.7">${val || ''}</small>`;
       btn.onclick = () => {
-        if (val) {
-          if (!confirm(`Are you sure you want to uncheck "${r.name}"?`)) return;
-        }
+        if (val && !confirm(`Are you sure you want to uncheck "${r.name}"?`)) return;
         setSyncUI(true);
         const timeStr = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         const newVal = val ? null : `✔ ${timeStr} (${userFirstName})`;
@@ -326,10 +331,6 @@
   function closeManageRoutineModal() { document.getElementById('manageRoutineModal').style.display = 'none'; }
   function loadHistory(daysCount) {
     const historyList = document.getElementById('historyList');
-    const btnWeek = document.getElementById('btnWeek');
-    const btnMonth = document.getElementById('btnMonth');
-    btnWeek.style.background = daysCount === 7 ? '#0277bd' : 'transparent';
-    btnMonth.style.background = daysCount === 30 ? '#0277bd' : 'transparent';
     historyList.innerHTML = '<p style="text-align:center; opacity:0.5;">Fetching records...</p>';
     db.ref('days').limitToLast(daysCount).once('value', snapshot => {
       const allDays = snapshot.val() || {};
@@ -357,7 +358,7 @@
   }
   function setSyncUI(isSyncing) { const bar = document.getElementById('syncStatus'); if(isSyncing) bar.classList.add('visible'); else bar.classList.remove('visible'); }
   function openSupplyModal() { document.getElementById('supplyModal').style.display = 'flex'; }
-  function closeSupplyModal() { document.getElementById('supplyModal').style.none; }
+  function closeSupplyModal() { document.getElementById('supplyModal').style.display = 'none'; }
   function openHistoryModal() { document.getElementById('historyModal').style.display = 'flex'; loadHistory(7); }
   function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
   function handleGoogleLogin() { auth.signInWithPopup(provider); }
@@ -366,4 +367,3 @@
 </script>
 </body>
 </html>
-
