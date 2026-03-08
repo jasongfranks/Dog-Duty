@@ -65,6 +65,16 @@
     }
 
     /**
+     * HISTORY ACCORDION STYLES
+     */
+    .history-week-header { 
+      background: #333; padding: 12px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; 
+      display: flex; justify-content: space-between; align-items: center; font-weight: bold; border: 1px solid #444;
+    }
+    .history-week-content { display: none; margin-bottom: 20px; padding-left: 10px; border-left: 2px solid #333; }
+    .history-week-content.expanded { display: block; }
+
+    /**
      * TOGGLE SWITCHES & INPUT GROUPS
      */
     .supply-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 10px; border-bottom: 1px solid #333; }
@@ -180,10 +190,6 @@
 <div id="historyModal" class="modal">
   <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column;">
     <h2>Activity History</h2>
-    <div style="display: flex; background: #333; border-radius: 12px; padding: 4px; margin-bottom: 15px;">
-      <button id="btnWeek" onclick="loadHistory(7)" style="flex:1; border:none; background:#0277bd; color:white; padding:8px; border-radius:10px; font-weight:bold; cursor:pointer;">Last 7 Days</button>
-      <button id="btnMonth" onclick="loadHistory(30)" style="flex:1; border:none; background:transparent; color:#aaa; padding:8px; border-radius:10px; font-weight:bold; cursor:pointer;">Last 30 Days</button>
-    </div>
     <div id="historyList" style="text-align: left; overflow-y: auto; flex-grow: 1; padding-right: 5px;"></div>
     <button class="action-btn secondary" style="margin-top: 15px;" onclick="closeHistoryModal()">Close</button>
   </div>
@@ -193,7 +199,7 @@
   /**
    * SECTION 1: CONFIGURATION & GLOBAL STATE
    */
-  const APP_VERSION = "Version 1.3.2";
+  const APP_VERSION = "Version 1.3.4";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBaIQVgPLcCj4T8-wvZ90L9iKSJHZ_7Srg",
@@ -211,12 +217,11 @@
   const auth = firebase.auth();
   const provider = new firebase.auth.GoogleAuthProvider();
 
-  // Application Global State
   let userFirstName = "";
   let activeWalks = [];
   let currentRoutines = [];
   let editingWalkId = null;
-  let todayKey = ""; // Now dynamically set
+  let todayKey = "";
 
   document.getElementById('versionDisplay').textContent = APP_VERSION;
 
@@ -235,7 +240,6 @@
           document.getElementById('appContent').style.display = 'block';
           document.getElementById('userNameDisplay').textContent = userFirstName;
           
-          // Initial trigger for setup
           refreshAppState();
           scheduleMidnightRefresh();
         } else {
@@ -252,34 +256,23 @@
     }
   });
 
-  /**
-   * Updates the todayKey and resets Firebase listeners for the new date.
-   */
   function refreshAppState() {
     todayKey = getLocalToday();
-    console.log("App Refreshed for Date:", todayKey);
     init();
   }
 
-  /**
-   * Calculates time until midnight and sets a one-time timer to refresh the app.
-   */
   function scheduleMidnightRefresh() {
     const now = new Date();
-    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1); // 1 sec past midnight
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1);
     const msUntilMidnight = midnight.getTime() - now.getTime();
 
     setTimeout(() => {
       refreshAppState();
-      scheduleMidnightRefresh(); // Reschedule for the next night
+      scheduleMidnightRefresh();
     }, msUntilMidnight);
   }
 
-  /**
-   * Sets up real-time database listeners for routines and supply levels.
-   */
   function init() {
-    // Clear existing listeners to prevent memory leaks or double-renders on date flip
     db.ref('settings/routines').off();
     db.ref(`days/${todayKey}`).off();
 
@@ -479,12 +472,90 @@
 
   function openSupplyModal() { document.getElementById('supplyModal').style.display = 'flex'; }
   function closeSupplyModal() { document.getElementById('supplyModal').style.display = 'none'; }
-  function openHistoryModal() { document.getElementById('historyModal').style.display = 'flex'; loadHistory(7); }
+  function openHistoryModal() { document.getElementById('historyModal').style.display = 'flex'; loadHistory(); }
   function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
 
   /**
    * SECTION 6: SYSTEM UTILITIES
    */
+  function loadHistory() {
+    const daysCount = 30;
+    const historyList = document.getElementById('historyList');
+    historyList.innerHTML = '<p style="text-align:center; opacity:0.5;">Organizing weeks...</p>';
+
+    db.ref('days').limitToLast(daysCount).once('value', snapshot => {
+      const allDays = snapshot.val() || {};
+      historyList.innerHTML = '';
+      const sortedKeys = Object.keys(allDays).sort().reverse();
+      
+      if (sortedKeys.length === 0) {
+        historyList.innerHTML = '<p style="text-align:center; opacity:0.5;">No history found.</p>';
+        return;
+      }
+
+      // GROUPING LOGIC
+      const weeks = {};
+      sortedKeys.forEach(dateKey => {
+        const d = new Date(dateKey + 'T00:00:00');
+        const day = d.getDay();
+        const diff = d.getDate() - day; 
+        const sunday = new Date(d.setDate(diff)).toISOString().split('T')[0];
+        
+        if (!weeks[sunday]) weeks[sunday] = [];
+        weeks[sunday].push(dateKey);
+      });
+
+      // RENDER WEEKLY ACCORDIONS
+      Object.keys(weeks).sort().reverse().forEach((sundayKey, index) => {
+        const weekDiv = document.createElement('div');
+        const isCurrentWeek = index === 0;
+        
+        const header = document.createElement('div');
+        header.className = 'history-week-header';
+        header.innerHTML = `<span>Week of ${new Date(sundayKey + 'T00:00:00').toLocaleDateString(undefined, {month:'short', day:'numeric'})}</span> <span>${isCurrentWeek ? '▼' : '▶'}</span>`;
+        
+        const content = document.createElement('div');
+        content.className = `history-week-content ${isCurrentWeek ? 'expanded' : ''}`;
+        
+        header.onclick = () => {
+          content.classList.toggle('expanded');
+          header.querySelector('span:last-child').textContent = content.classList.contains('expanded') ? '▼' : '▶';
+        };
+
+        weeks[sundayKey].forEach(dateKey => {
+          const dayData = allDays[dateKey];
+          const daySection = document.createElement('div');
+          daySection.style.cssText = "margin-bottom:12px; padding:12px; background:#252525; border-radius:15px; border-left:4px solid #4caf50;";
+          
+          const dateObj = new Date(dateKey + 'T00:00:00');
+          const dateDisplay = dateKey === todayKey ? "Today" : dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+          
+          let routines = [];
+          Object.entries(dayData).forEach(([key, val]) => {
+            if (key !== "Walks" && typeof val === 'string' && val.includes('✔')) {
+              const setting = currentRoutines.find(r => r.name === key);
+              routines.push(`<span style="display:inline-block; background:#1b5e20; padding:2px 8px; border-radius:8px; margin:2px; font-size:11px;">${setting ? setting.emoji : '📋'} ${key}: ${val.replace('✔ ', '')}</span>`);
+            }
+          });
+
+          let walksArr = [];
+          if (dayData.Walks) {
+            try { 
+              JSON.parse(dayData.Walks).forEach(w => walksArr.push(`<div style="font-size:13px; margin-top:5px; color:#ddd;">${w.note} ${w.time} <span style="opacity:0.6">(${w.name})</span></div>`)); 
+            } catch(e) {}
+          }
+
+          daySection.innerHTML = `<div style="font-weight:800; color:#4fc3f7; font-size:14px; margin-bottom:8px;">${dateDisplay}</div><div>${routines.join('')}</div><div style="border-top:1px solid #333; margin-top:5px; padding-top:5px;">${walksArr.join('')}</div>`;
+          content.appendChild(daySection);
+        });
+
+        weekDiv.appendChild(header);
+        weekDiv.appendChild(content);
+        historyList.appendChild(weekDiv);
+      });
+    });
+  }
+
   function getLocalToday() {
     const now = new Date();
     const offset = now.getTimezoneOffset() * 60000;
@@ -508,29 +579,6 @@
     const low = []; if(items.Food) low.push('FOOD'); if(items.Meds) low.push('MEDS'); if(items.Treats) low.push('TREATS');
     const b = document.getElementById('supplyBanner'); if(b) { b.style.display = low.length > 0 ? 'block' : 'none'; b.innerHTML = low.length > 0 ? `⚠️ LOW ${low.join(' & ')} ⚠️` : ''; }
     ['Food','Meds','Treats'].forEach(s => { const el = document.getElementById('check'+s); if(el) el.checked = !!items[s]; });
-  }
-
-  function loadHistory(daysCount) {
-    const historyList = document.getElementById('historyList');
-    historyList.innerHTML = '<p style="text-align:center; opacity:0.5;">Fetching records...</p>';
-    db.ref('days').limitToLast(daysCount).once('value', snapshot => {
-      const allDays = snapshot.val() || {};
-      historyList.innerHTML = '';
-      const sortedKeys = Object.keys(allDays).sort().reverse();
-      sortedKeys.forEach(dateKey => {
-        const dayData = allDays[dateKey];
-        const daySection = document.createElement('div');
-        daySection.style.cssText = "margin-bottom:12px; padding:12px; background:#252525; border-radius:15px; border-left:4px solid #4caf50;";
-        const dateObj = new Date(dateKey + 'T00:00:00');
-        const dateDisplay = dateKey === todayKey ? "Today" : dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-        let routines = [];
-        currentRoutines.forEach(r => { if(dayData[r.name]) routines.push(`<span style="display:inline-block; background:#1b5e20; padding:2px 8px; border-radius:8px; margin:2px; font-size:11px;">${r.emoji} ${r.name}: ${dayData[r.name].replace('✔ ', '')}</span>`); });
-        let walksArr = [];
-        if (dayData.Walks) { try { JSON.parse(dayData.Walks).forEach(w => walksArr.push(`<div style="font-size:13px; margin-top:5px; color:#ddd;">${w.note} ${w.time} <span style="opacity:0.6">(${w.name})</span></div>`)); } catch(e) {} }
-        daySection.innerHTML = `<div style="font-weight:800; color:#4fc3f7; font-size:14px; margin-bottom:8px;">${dateDisplay}</div><div>${routines.join('')}</div><div style="border-top:1px solid #333; margin-top:5px; padding-top:5px;">${walksArr.join('')}</div>`;
-        historyList.appendChild(daySection);
-      });
-    });
   }
 
   function setSyncUI(isSyncing) { 
