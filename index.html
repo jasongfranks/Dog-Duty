@@ -99,7 +99,7 @@
     <button class="action-btn secondary" style="background:#455a64; margin-top:10px;" onclick="openHistoryModal()">📅 View History</button>
   </div>
 
-  <div class="version-label" onclick="window.location.reload(true)">Version 1.2.7</div>
+  <div class="version-label" onclick="window.location.reload(true)">Version 1.2.8</div>
 </main>
 
 <div id="loginModal" class="modal" style="display:flex;">
@@ -179,8 +179,6 @@
     measurementId: "G-C460E5SS3D"
   };
 
-  const APPROVED_EMAILS = ["jason.g.franks@gmail.com", "jaime.l.franks@gmail.com", "garrett.j.franks@gmail.com", "genevieve.j.franks@gmail.com"];
-
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const auth = firebase.auth();
@@ -202,14 +200,28 @@
   auth.onAuthStateChanged(user => {
     if (user) {
       const email = user.email.toLowerCase();
-      if (APPROVED_EMAILS.includes(email)) {
-        userFirstName = user.displayName ? user.displayName.split(' ')[0] : "User";
-        document.getElementById('loginModal').style.display = 'none';
-        document.getElementById('appContent').style.display = 'block';
-        document.getElementById('userNameDisplay').textContent = userFirstName;
-        init();
-      } else { auth.signOut(); }
-    } else { document.getElementById('loginModal').style.display = 'flex'; document.getElementById('appContent').style.display = 'none'; }
+      const safeEmail = email.replace(/\./g, ',');
+      
+      // Check the database allowlist
+      db.ref(`allowlist/${safeEmail}`).once('value').then(snap => {
+        if (snap.exists()) {
+          userFirstName = user.displayName ? user.displayName.split(' ')[0] : "User";
+          document.getElementById('loginModal').style.display = 'none';
+          document.getElementById('appContent').style.display = 'block';
+          document.getElementById('userNameDisplay').textContent = userFirstName;
+          init();
+        } else {
+          alert("Access Denied: Email not on allowlist.");
+          auth.signOut();
+        }
+      }).catch(() => {
+        alert("Security Error: Access Denied.");
+        auth.signOut();
+      });
+    } else {
+      document.getElementById('loginModal').style.display = 'flex';
+      document.getElementById('appContent').style.display = 'none';
+    }
   });
 
   function init() {
@@ -367,3 +379,5 @@
 </script>
 </body>
 </html>
+
+
