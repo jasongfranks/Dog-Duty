@@ -192,9 +192,8 @@
 <script>
   /**
    * SECTION 1: CONFIGURATION & GLOBAL STATE
-   * Primary settings and Firebase initialization.
    */
-  const APP_VERSION = "Version 1.3.1";
+  const APP_VERSION = "Version 1.3.2";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBaIQVgPLcCj4T8-wvZ90L9iKSJHZ_7Srg",
@@ -217,17 +216,17 @@
   let activeWalks = [];
   let currentRoutines = [];
   let editingWalkId = null;
+  let todayKey = ""; // Now dynamically set
 
   document.getElementById('versionDisplay').textContent = APP_VERSION;
 
   /**
    * SECTION 2: AUTHENTICATION & INITIALIZATION
-   * Monitors login state and verifies users against an allowlist.
    */
   auth.onAuthStateChanged(user => {
     if (user) {
       const email = user.email.toLowerCase();
-      const safeEmail = email.replace(/\./g, ','); // Firebase path safety
+      const safeEmail = email.replace(/\./g, ',');
       
       db.ref(`allowlist/${safeEmail}`).once('value').then(snap => {
         if (snap.exists()) {
@@ -235,7 +234,10 @@
           document.getElementById('loginModal').style.display = 'none';
           document.getElementById('appContent').style.display = 'block';
           document.getElementById('userNameDisplay').textContent = userFirstName;
-          init();
+          
+          // Initial trigger for setup
+          refreshAppState();
+          scheduleMidnightRefresh();
         } else {
           alert("Access Denied: Email not on allowlist.");
           auth.signOut();
@@ -251,9 +253,36 @@
   });
 
   /**
+   * Updates the todayKey and resets Firebase listeners for the new date.
+   */
+  function refreshAppState() {
+    todayKey = getLocalToday();
+    console.log("App Refreshed for Date:", todayKey);
+    init();
+  }
+
+  /**
+   * Calculates time until midnight and sets a one-time timer to refresh the app.
+   */
+  function scheduleMidnightRefresh() {
+    const now = new Date();
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1); // 1 sec past midnight
+    const msUntilMidnight = midnight.getTime() - now.getTime();
+
+    setTimeout(() => {
+      refreshAppState();
+      scheduleMidnightRefresh(); // Reschedule for the next night
+    }, msUntilMidnight);
+  }
+
+  /**
    * Sets up real-time database listeners for routines and supply levels.
    */
   function init() {
+    // Clear existing listeners to prevent memory leaks or double-renders on date flip
+    db.ref('settings/routines').off();
+    db.ref(`days/${todayKey}`).off();
+
     db.ref('settings/routines').on('value', snap => {
       const data = snap.val();
       if (Array.isArray(data) && typeof data[0] === 'string') {
@@ -275,7 +304,6 @@
 
   /**
    * SECTION 3: DATA RENDERING (READS)
-   * Functions that build the HTML view from Firebase snapshots.
    */
   function renderRoutine(dayData) {
     const rContainer = document.getElementById('routineButtons');
@@ -301,7 +329,6 @@
     wContainer.innerHTML = '';
     try { activeWalks = walksJson ? JSON.parse(walksJson) : []; } catch(e) { activeWalks = []; }
     
-    // Sort chronological based on time string
     activeWalks.sort((a, b) => {
       const toMinutes = (timeStr) => {
         const [time, period] = timeStr.split(' ');
@@ -328,7 +355,6 @@
 
   /**
    * SECTION 4: DATA WRITES & ACTIONS
-   * Functions that modify Firebase data.
    */
   function saveWalk(subAction) {
     setSyncUI(true);
@@ -383,7 +409,6 @@
 
   /**
    * SECTION 5: MODAL & UI CONTROLS
-   * Handles opening/closing of overlays and view states.
    */
   function openWalkModal(w = null) { 
     editingWalkId = w ? w.id : null; 
@@ -459,19 +484,12 @@
 
   /**
    * SECTION 6: SYSTEM UTILITIES
-   * Global formatting and support functions.
-   */
-
-  /**
-   * Returns current date adjusted for local timezone offset.
-   * @returns {string} YYYY-MM-DD
    */
   function getLocalToday() {
     const now = new Date();
     const offset = now.getTimezoneOffset() * 60000;
     return (new Date(now - offset)).toISOString().split('T')[0];
   }
-  const todayKey = getLocalToday();
 
   function getTimeEmoji(timeStr) {
     try {
@@ -525,4 +543,3 @@
 </script>
 </body>
 </html>
-
