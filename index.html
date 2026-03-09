@@ -335,7 +335,8 @@
       const btn = document.createElement('button');
       btn.className = `task-btn done`;
       // REMOVED CHECKMARK EMOJI
-      btn.innerHTML = `<div class="walk-content"><div>${getTimeEmoji(w.time)} Walk</div><div style="font-size:24px;">${w.note}</div><div><small>${w.time} (${w.name})</small></div></div>`;
+      const label = (w.note === '🏡') ? 'Backyard' : 'Walk';
+      btn.innerHTML = `<div class="walk-content"><div>${getTimeEmoji(w.time)} ${label}</div><div style="font-size:24px;">${w.note}</div><div><small>${w.time} (${w.name})</small></div></div>`;
       btn.onclick = () => openWalkModal(w);
       wContainer.appendChild(btn);
     });
@@ -544,7 +545,10 @@
             sec.style.cssText = "margin-bottom:10px; padding:10px; background:#252525; border-radius:10px;";
             // UPDATED PARSING TO HANDLE MISSING CHECKMARK
             let rts = []; Object.entries(data).forEach(([k, v]) => { if(k !== "Walks" && typeof v === 'string') rts.push(`<span style="font-size:11px; margin-right:5px;">${k}: ${v.split(' (')[0]}</span>`); });
-            let wks = []; if(data.Walks) JSON.parse(data.Walks).forEach(w => wks.push(`${w.note} ${w.time}`));
+            let wks = []; if(data.Walks) JSON.parse(data.Walks).forEach(w => {
+              const label = (w.note === '🏡') ? 'Backyard' : 'Walk';
+              wks.push(`${w.note} ${label} ${w.time}`);
+            });
             sec.innerHTML = `<div style="color:#4fc3f7; font-size:12px;">${dk}</div><div style="font-size:11px;">${rts.join(' ')}</div><div style="font-size:11px; opacity:0.6;">${wks.join(', ')}</div>`;
             cD.appendChild(sec);
           });
@@ -588,4 +592,3 @@
 </script>
 </body>
 </html>
-
