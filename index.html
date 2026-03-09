@@ -34,7 +34,6 @@
     .header-controls { display: flex; gap: 5px; justify-content: flex-end; flex: 1; min-width: 0; }
     .icon-btn { background: #333; padding: 6px 10px; border-radius: 15px; font-weight: bold; font-size: 13px; color: #fff; cursor: pointer; border: none; display: flex; align-items: center; gap: 4px; white-space: nowrap; min-width: 0; }
     
-    /* Logic to prevent name from pushing UI off screen */
     #userNameDisplay { max-width: 80px; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: bottom; }
 
     .list-container { display: flex; flex-direction: column; gap: 12px; }
@@ -198,7 +197,7 @@
   /**
    * SECTION 1: CONFIGURATION & GLOBAL STATE
    */
-  const APP_VERSION = "Version 1.5.5";
+  const APP_VERSION = "Version 1.5.4";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBaIQVgPLcCj4T8-wvZ90L9iKSJHZ_7Srg",
@@ -300,13 +299,11 @@
       const val = dayData[r.name];
       const btn = document.createElement('button');
       btn.className = `task-btn ${val ? 'done' : ''}`;
-      // REMOVED CHECKMARK EMOJI
       btn.innerHTML = `<span>${r.emoji} ${r.name}</span><small>${val || ''}</small>`;
       btn.onclick = () => {
         if (val && !confirm(`Uncheck "${r.name}"?`)) return;
         setSyncUI(true);
         const timeStr = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-        // REMOVED CHECKMARK EMOJI FROM SAVED STRING
         db.ref(`days/${todayKey}/${r.name}`).set(val ? null : `${timeStr} (${userFirstName})`).then(() => setSyncUI(false));
       };
       rContainer.appendChild(btn);
@@ -318,7 +315,6 @@
     wContainer.innerHTML = '';
     try { activeWalks = walksJson ? JSON.parse(walksJson) : []; } catch(e) { activeWalks = []; }
     
-    // Sorting walks chronologically by time
     activeWalks.sort((a, b) => {
         const getMinutes = (timeStr) => {
             const [time, period] = timeStr.split(' ');
@@ -334,7 +330,6 @@
     activeWalks.forEach(w => {
       const btn = document.createElement('button');
       btn.className = `task-btn done`;
-      // REMOVED CHECKMARK EMOJI
       const label = (w.note === '🏡') ? 'Backyard' : 'Walk';
       btn.innerHTML = `<div class="walk-content"><div>${getTimeEmoji(w.time)} ${label}</div><div style="font-size:24px;">${w.note}</div><div><small>${w.time} (${w.name})</small></div></div>`;
       btn.onclick = () => openWalkModal(w);
@@ -543,7 +538,6 @@
             const data = allDays[dk];
             const sec = document.createElement('div');
             sec.style.cssText = "margin-bottom:10px; padding:10px; background:#252525; border-radius:10px;";
-            // UPDATED PARSING TO HANDLE MISSING CHECKMARK
             let rts = []; Object.entries(data).forEach(([k, v]) => { if(k !== "Walks" && typeof v === 'string') rts.push(`<span style="font-size:11px; margin-right:5px;">${k}: ${v.split(' (')[0]}</span>`); });
             let wks = []; if(data.Walks) JSON.parse(data.Walks).forEach(w => {
               const label = (w.note === '🏡') ? 'Backyard' : 'Walk';
@@ -566,7 +560,6 @@
         Object.entries(data[date]).forEach(([k,v]) => {
           if(k === "Walks") { JSON.parse(v).forEach(w => rows.push([date, "Walk", w.note, w.time, w.name])); }
           else if(typeof v === 'string') { 
-              // UPDATED EXPORT PARSING
               rows.push([date, "Routine", k, v.split(' (')[0], v.split('(')[1].replace(')','')]); 
           }
         });
