@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dog Duty Pro</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+    <style>
+        body { background-color: #121212; -webkit-tap-highlight-color: transparent; }
+        .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body>
+
+<div id="app" v-cloak class="min-h-screen pb-24">
+    
+    <div v-if="lowSupplies.length" class="bg-error text-error-content p-2 text-center font-bold text-xs uppercase tracking-widest animate-pulse">
+        ⚠️ Low: {{ lowSupplies.join(' & ') }} ⚠️
+    </div>
+
+    <header class="p-4 flex justify-between items-center bg-base-100 border-b border-base-300 sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <div class="avatar">
+                <div class="w-8 rounded-lg ring ring-primary ring-offset-base-100 ring-offset-2">
+                    <img src="dogdutyicon.png" alt="Logo" />
+                </div>
+            </div>
+            <h1 class="font-black text-xl tracking-tighter">DOG DUTY</h1>
+            <span v-if="syncing" class="loading loading-ring loading-xs text-info"></span>
+        </div>
+        <div class="flex gap-2">
+            <button @click="openModal('leaderboard')" class="btn btn-ghost btn-circle btn-sm">🏆</button>
+            <button @click="confirmSignOut" class="btn btn-ghost btn-sm gap-1">
+                <div class="avatar placeholder">
+                    <div class="bg-neutral text-neutral-content rounded-full w-6">
+                        <span>{{ userFirstName.charAt(0) }}</span>
+                    </div>
+                </div>
+                {{ userFirstName }}
+            </button>
+        </div>
+    </header>
+
+    <main class="p-4 max-w-md mx-auto space-y-6">
+        
+        <div v-if="!authorized" class="flex flex-col items-center justify-center py-20 text-center">
+            <img src="dogdutyicon.png" class="w-32 h-32 rounded-3xl shadow-2xl mb-8" />
+            <h2 class="text-3xl font-bold mb-2">Family Access</h2>
+            <p class="opacity-60 mb-8 text-sm">Sign in to coordinate dog care.</p>
+            <button @click="handleGoogleLogin" class="btn btn-primary w-full max-w-xs">
+                Sign in with Google
+            </button>
+        </div>
+
+        <div v-else>
+            <section>
+                <div class="flex justify-between items-end mb-4 px-1">
+                    <h2 class="text-xs font-bold uppercase tracking-widest opacity-50">Daily Routines</h2>
+                    <button @click="openModal('editRoutines')" class="btn btn-ghost btn-xs text-primary">Edit List</button>
+                </div>
+                <div class="grid grid-cols-1 gap-3">
+                    <button 
+                        v-for="r in currentRoutines" 
+                        :key="r.name"
+                        @click="toggleRoutine(r)"
+                        :class="['btn h-20 flex justify-between px-6 rounded-2xl border-none shadow-md transition-all', 
+                                dayData[r.name] ? 'btn-success text-white' : 'bg-base-200 text-base-content hover:bg-base-300']"
+                    >
+                        <div class="flex flex-col items-start">
+                            <span class="text-2xl">{{ r.emoji }}</span>
+                            <span class="font-bold tracking-tight">{{ r.name }}</span>
+                        </div>
+                        <div class="text-right">
+                            <span v-if="dayData[r.name]" class="text-[10px] block opacity-80 uppercase font-black">Done</span>
+                            <span class="text-xs font-medium">{{ dayData[r.name] || '--:--' }}</span>
+                        </div>
+                    </button>
+                </div>
+            </section>
+
+            <section class="mt-8">
+                <div class="flex justify-between items-end mb-4 px-1">
+                    <h2 class="text-xs font-bold uppercase tracking-widest opacity-50">Activity Logs</h2>
+                </div>
+                <div class="space-y-3">
+                    <div 
+                        v-for="w in sortedWalks" 
+                        :key="w.id"
+                        @click="editWalk(w)"
+                        class="bg-base-300 rounded-2xl p-4 flex items-center justify-between cursor-pointer active:scale-95 transition-transform"
+                    >
+                        <div class="flex items-center gap-4">
+                            <div class="text-3xl">{{ w.note }}</div>
+                            <div>
+                                <div class="font-bold text-sm">{{ w.note === '🏡' ? 'Backyard' : 'Walk' }}</div>
+                                <div class="text-[10px] opacity-60 uppercase">{{ w.name }}</div>
+                            </div>
+                        </div>
+                        <div class="text-right font-mono font-bold text-primary">{{ w.time }}</div>
+                    </div>
+                    
+                    <button @click="openModal('walk')" class="btn btn-outline btn-primary w-full rounded-2xl border-2 h-16 text-lg">
+                        ＋ Add Log
+                    </button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div v-if="authorized" class="btm-nav btm-nav-md border-t border-base-300 safe-area-bottom">
+        <button @click="openModal('history')" class="text-sm">
+            <span>📅 History</span>
+        </button>
+        <button @click="openModal('supplies')" :class="{'active bg-base-200': lowSupplies.length > 0}">
+            <span class="indicator">
+                <span v-if="lowSupplies.length" class="indicator-item badge badge-error badge-xs"></span>
+                📦 Supplies
+            </span>
+        </button>
+    </div>
+
+    <dialog id="walk_modal" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg mb-4">{{ editingWalkId ? 'Edit Activity' : 'Log Activity' }}</h3>
+            <input type="time" v-model="formWalkTime" class="input input-bordered w-full text-3xl h-20 text-center mb-6 font-mono" />
+            
+            <div class="grid grid-cols-2 gap-3">
+                <button @click="saveWalk('💦')" class="btn btn-lg h-20 btn-info text-white">💦 Pee</button>
+                <button @click="saveWalk('💩')" class="btn btn-lg h-20 btn-warning text-white">💩 Poop</button>
+                <button @click="saveWalk('💦💩')" class="btn btn-lg h-20 col-span-2">💦💩 Both</button>
+                <button @click="saveWalk('🏡')" class="btn btn-lg h-20 col-span-2 bg-stone-700 border-none text-white">🏡 Backyard</button>
+            </div>
+            
+            <div class="modal-action flex flex-col gap-2">
+                <button v-if="editingWalkId" @click="deleteWalk" class="btn btn-error btn-outline w-full">Delete Entry</button>
+                <button @click="closeModal('walk')" class="btn w-full">Cancel</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog id="supplies_modal" class="modal">
+        <div class="modal-box">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-lg">Inventory</h3>
+                <button @click="openModal('editSupplies')" class="btn btn-ghost btn-xs text-primary">Edit Items</button>
+            </div>
+            <div class="space-y-1">
+                <div v-for="item in currentSupplies" class="flex justify-between items-center p-3 bg-base-200 rounded-xl mb-2">
+                    <span class="font-bold">{{ item.emoji }} {{ item.name }}</span>
+                    <input type="checkbox" class="toggle toggle-error" 
+                           :checked="supplyStatus[item.name]" 
+                           @change="toggleSupply(item.name)" />
+                </div>
+            </div>
+            <div class="modal-action">
+                <button @click="closeModal('supplies')" class="btn">Close</button>
+            </div>
+        </div>
+    </dialog>
+
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBaIQVgPLcCj4T8-wvZ90L9iKSJHZ_7Srg",
+        authDomain: "dog-duty-fe307.firebaseapp.com",
+        databaseURL: "https://dog-duty-fe307-default-rtdb.firebaseio.com",
+        projectId: "dog-duty-fe307",
+        storageBucket: "dog-duty-fe307.firebasestorage.app",
+        messagingSenderId: "864273780235",
+        appId: "1:864273780235:web:42c82e0afa5deadc1c10e"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    const { createApp, ref, computed, onMounted } = Vue;
+
+    createApp({
+        setup() {
+            const authorized = ref(false);
+            const userFirstName = ref('...');
+            const syncing = ref(false);
+            const dayData = ref({});
+            const activeWalks = ref([]);
+            const currentRoutines = ref([]);
+            const currentSupplies = ref([]);
+            const supplyStatus = ref({});
+            
+            // Forms
+            const formWalkTime = ref('');
+            const editingWalkId = ref(null);
+
+            const todayKey = computed(() => {
+                return (new Date(Date.now() - (new Date()).getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+            });
+
+            const lowSupplies = computed(() => {
+                return Object.entries(supplyStatus.value)
+                    .filter(([name, isLow]) => isLow)
+                    .map(([name]) => name.toUpperCase());
+            });
+
+            const sortedWalks = computed(() => {
+                return [...activeWalks.value].sort((a, b) => {
+                    const getMin = (t) => {
+                        let [h, m] = t.split(/[: ]/);
+                        const isPM = t.includes('PM');
+                        h = parseInt(h);
+                        if (isPM && h !== 12) h += 12;
+                        if (!isPM && h === 12) h = 0;
+                        return h * 60 + parseInt(m);
+                    };
+                    return getMin(a.time) - getMin(b.time);
+                });
+            });
+
+            // Initialize App
+            onMounted(() => {
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        db.ref(`allowlist/${user.uid}`).once('value').then(snap => {
+                            if (snap.exists()) {
+                                userFirstName.value = user.displayName ? user.displayName.split(' ')[0] : "User";
+                                authorized.ref = true; // wait, ref needs .value
+                                authorized.value = true;
+                                loadData();
+                            } else {
+                                auth.signOut();
+                            }
+                        });
+                    } else {
+                        authorized.value = false;
+                    }
+                });
+            });
+
+            const loadData = () => {
+                // Listen to Routines
+                db.ref('settings/routines').on('value', snap => {
+                    currentRoutines.value = snap.val() || [];
+                });
+
+                // Listen to Daily Activity
+                db.ref(`days/${todayKey.value}`).on('value', snap => {
+                    const val = snap.val() || {};
+                    dayData.value = val;
+                    activeWalks.value = val.Walks ? JSON.parse(val.Walks) : [];
+                });
+
+                // Listen to Supplies
+                db.ref('settings/supplyList').on('value', snap => {
+                    currentSupplies.value = snap.val() || [];
+                });
+                db.ref('supplies').on('value', snap => {
+                    supplyStatus.value = snap.val() || {};
+                });
+            };
+
+            const toggleRoutine = (routine) => {
+                const val = dayData.value[routine.name];
+                if (val && !confirm(`Uncheck ${routine.name}?`)) return;
+                
+                syncing.value = true;
+                const timeStr = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                db.ref(`days/${todayKey.value}/${routine.name}`)
+                  .set(val ? null : `${timeStr} (${userFirstName.value})`)
+                  .then(() => syncing.value = false);
+            };
+
+            const toggleSupply = (name) => {
+                db.ref(`supplies/${name}`).set(!supplyStatus.value[name]);
+            };
+
+            const openModal = (id) => {
+                if(id === 'walk') {
+                    editingWalkId.value = null;
+                    const now = new Date();
+                    formWalkTime.value = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+                }
+                document.getElementById(`${id}_modal`).showModal();
+            };
+
+            const closeModal = (id) => document.getElementById(`${id}_modal`).close();
+
+            const saveWalk = (emoji) => {
+                syncing.value = true;
+                const [h, m] = formWalkTime.value.split(':');
+                const finalTime = `${((h % 12) || 12)}:${m} ${h >= 12 ? 'PM' : 'AM'}`;
+                
+                let newWalks = [...activeWalks.value];
+                if(editingWalkId.value) {
+                    newWalks = newWalks.map(w => w.id == editingWalkId.value ? {...w, time: finalTime, note: emoji} : w);
+                } else {
+                    newWalks.push({ id: Date.now(), time: finalTime, name: userFirstName.value, note: emoji });
+                }
+                
+                db.ref(`days/${todayKey.value}/Walks`).set(JSON.stringify(newWalks)).then(() => {
+                    syncing.value = false;
+                    closeModal('walk');
+                });
+            };
+
+            const editWalk = (walk) => {
+                editingWalkId.value = walk.id;
+                // Convert AM/PM back to 24h for input
+                const [t, p] = walk.time.split(' ');
+                let [h, m] = t.split(':');
+                if (p === 'PM' && h !== '12') h = parseInt(h) + 12;
+                if (p === 'AM' && h === '12') h = '00';
+                formWalkTime.value = `${h.toString().padStart(2, '0')}:${m}`;
+                document.getElementById(`walk_modal`).showModal();
+            };
+
+            const deleteWalk = () => {
+                if(!confirm("Delete this log?")) return;
+                const filtered = activeWalks.value.filter(w => w.id != editingWalkId.value);
+                db.ref(`days/${todayKey.value}/Walks`).set(JSON.stringify(filtered)).then(() => closeModal('walk'));
+            };
+
+            const handleGoogleLogin = () => auth.signInWithPopup(provider);
+            const confirmSignOut = () => confirm("Sign out?") && auth.signOut().then(() => location.reload());
+
+            return {
+                authorized, userFirstName, syncing, dayData, activeWalks, currentRoutines, currentSupplies, supplyStatus,
+                formWalkTime, editingWalkId, lowSupplies, sortedWalks,
+                toggleRoutine, toggleSupply, openModal, closeModal, saveWalk, editWalk, deleteWalk, handleGoogleLogin, confirmSignOut
+            };
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
