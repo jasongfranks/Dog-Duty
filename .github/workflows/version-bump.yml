@@ -1,0 +1,57 @@
+name: Auto Version Bump
+on:
+  push:
+    branches:
+      - main  # Adjust if your branch is named 'master'
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Increment Version
+        id: bump
+        run: |
+          # 1. Extract current version
+          VERSION_LINE=$(grep "APP_VERSION =" index.html)
+          CURRENT_VERSION=$(echo "$VERSION_LINE" | grep -oP '[0-9]+\.[0-9]+\.[0-9]+')
+          IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+          
+          # 2. Get commit message (lowercase for easier matching)
+          COMMIT_MSG=$(git log -1 --pretty=%B | tr '[:upper:]' '[:lower:]')
+          
+          # 3. Keyword logic
+          if [[ "$COMMIT_MSG" == *"major"* ]]; then
+            new_major=$((major + 1))
+            new_minor=0
+            new_patch=0
+          elif [[ "$COMMIT_MSG" == *"minor"* ]]; then
+            new_major=$major
+            new_minor=$((minor + 1))
+            new_patch=0
+          else
+            # Default to patch, or explicit "patch" keyword
+            new_major=$major
+            new_minor=$minor
+            new_patch=$((patch + 1))
+          fi
+          
+          NEW_VERSION="$new_major.$new_minor.$new_patch"
+          echo "new_v=$NEW_VERSION" >> $GITHUB_OUTPUT
+          
+          # 4. Update the file
+          sed -i "s/$CURRENT_VERSION/$NEW_VERSION/g" index.html
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "chore: bump version to v${{ steps.bump.outputs.new_v }} [skip ci]" || echo "No changes"
+          git push
